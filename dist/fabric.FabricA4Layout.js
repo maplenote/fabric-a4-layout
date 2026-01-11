@@ -1,7 +1,31 @@
-import { Control as u, filters as I, util as p, Canvas as b, FabricImage as v, Rect as y, Point as C } from "fabric";
-const w = (i, e, s, t, a) => {
-  i.save(), i.translate(e, s), i.rotate(p.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.beginPath(), i.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "#F44336", i.fill(), i.lineWidth = 2, i.strokeStyle = "white", i.beginPath(), i.moveTo(-24 / 4, -24 / 4), i.lineTo(24 / 4, 24 / 4), i.moveTo(24 / 4, -24 / 4), i.lineTo(-24 / 4, 24 / 4), i.stroke(), i.restore();
-}, S = new u({
+import { Control as p, filters as I, util as m, Canvas as b, FabricImage as y, Rect as C, Point as w } from "fabric";
+const u = {
+  status: {
+    setting: "設定:",
+    dpi: "DPI",
+    pages: "頁數:",
+    orientation: "方向:",
+    portrait: "直式",
+    landscape: "橫式",
+    size: "A4尺寸:"
+  },
+  error: {
+    fetchFailed: "API 讀取失敗",
+    readError: "讀取圖片錯誤:",
+    listUpdated: "圖片列表已更新，並已自動移除A4範圍外的圖片",
+    canvasCleared: "A4已清空",
+    noData: "無可讀取的佈局資料",
+    skipped: "已略過重複圖片:",
+    removedFromCanvas: "已從A4移除圖片"
+  },
+  confirm: {
+    clearCanvas: "確定要清空A4上的所有圖片嗎？",
+    removeImage: `此圖片已在A4上。是否要移除它？
+(這能幫助您找回迷失的圖片)`
+  }
+}, S = (i, e, s, t, a) => {
+  i.save(), i.translate(e, s), i.rotate(m.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.beginPath(), i.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "#F44336", i.fill(), i.lineWidth = 2, i.strokeStyle = "white", i.beginPath(), i.moveTo(-24 / 4, -24 / 4), i.lineTo(24 / 4, 24 / 4), i.moveTo(24 / 4, -24 / 4), i.lineTo(-24 / 4, 24 / 4), i.stroke(), i.restore();
+}, k = new p({
   x: 0.5,
   y: -0.5,
   // Top Right
@@ -12,12 +36,12 @@ const w = (i, e, s, t, a) => {
   cursorStyle: "pointer",
   mouseUpHandler: (i, e) => {
     const s = e.target, t = s.canvas;
-    return s.imageId && t.fire("object:custom:delete", { target: s }), t.remove(s), t.requestRenderAll(), !0;
+    return t.remove(s), s.imageId && t.fire("object:custom:delete", { target: s }), t.requestRenderAll(), !0;
   },
-  render: w
+  render: S
 }), P = (i, e, s, t, a) => {
-  i.save(), i.translate(e, s), i.rotate(p.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.beginPath(), i.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.lineWidth = 1, i.strokeStyle = "#333", i.stroke(), i.beginPath(), i.arc(0, 0, 24 / 2, -Math.PI / 2, Math.PI / 2, !1), i.fillStyle = "black", i.fill(), i.restore();
-}, k = new u({
+  i.save(), i.translate(e, s), i.rotate(m.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.beginPath(), i.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.lineWidth = 1, i.strokeStyle = "#333", i.stroke(), i.beginPath(), i.arc(0, 0, 24 / 2, -Math.PI / 2, Math.PI / 2, !1), i.fillStyle = "black", i.fill(), i.restore();
+}, E = new p({
   x: -0.5,
   y: 0.5,
   // Bottom Left
@@ -33,9 +57,9 @@ const w = (i, e, s, t, a) => {
     }, 50), !0;
   },
   render: P
-}), z = (i, e, s, t, a) => {
-  i.save(), i.translate(e, s), i.rotate(p.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.strokeStyle = "#2196F3", i.lineWidth = 2, i.beginPath(), i.arc(0, 0, 24 / 4, 0, Math.PI * 1.5, !1), i.stroke(), i.fillStyle = "#2196F3", i.beginPath(), i.moveTo(24 / 4, -24 / 8), i.lineTo(24 / 4 + 4, 0), i.lineTo(24 / 4 - 4, 0), i.fill(), i.restore();
-}, E = new u({
+}), O = (i, e, s, t, a) => {
+  i.save(), i.translate(e, s), i.rotate(m.degreesToRadians(a.angle)), i.beginPath(), i.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), i.fillStyle = "white", i.fill(), i.shadowColor = "rgba(0,0,0,0.2)", i.shadowBlur = 4, i.fill(), i.strokeStyle = "#2196F3", i.lineWidth = 2, i.beginPath(), i.arc(0, 0, 24 / 4, 0, Math.PI * 1.5, !1), i.stroke(), i.fillStyle = "#2196F3", i.beginPath(), i.moveTo(24 / 4, -24 / 8), i.lineTo(24 / 4 + 4, 0), i.lineTo(24 / 4 - 4, 0), i.fill(), i.restore();
+}, z = new p({
   x: -0.5,
   y: -0.5,
   // Top Left
@@ -48,9 +72,9 @@ const w = (i, e, s, t, a) => {
     const s = e.target, t = s.canvas, a = s.angle || 0;
     return s.set("angle", (a + 90) % 360), s.setCoords(), t.requestRenderAll(), !0;
   },
-  render: z
+  render: O
 });
-class T {
+class B {
   constructor(e) {
     this.config = {
       dpi: 48,
@@ -61,11 +85,18 @@ class T {
       orientation: "portrait",
       saveWithBase64: !1,
       uniqueImages: !1,
+      saveEndpoint: null,
+      data: {},
       buttons: {},
       // Map of action -> buttonId
       statusDisplayId: null,
       errorDisplayId: null,
+      locale: {},
       ...e
+    }, this.t = {
+      status: { ...u.status, ...this.config.locale?.status || {} },
+      error: { ...u.error, ...this.config.locale?.error || {} },
+      confirm: { ...u.confirm, ...this.config.locale?.confirm || {} }
     }, this.config.dpi < 24 && (this.config.dpi = 24), this.config.dpi > 192 && (this.config.dpi = 192);
     const s = (t) => Math.round(t / 25.4 * this.config.dpi);
     this.pageWidthPx = s(this.config.width), this.pageHeightPx = s(this.config.height), this.gap = 4, this.canvasId = this.config.canvasId, this.canvas = null, this.images = [], this.pageCount = 1, this.orientation = this.config.orientation;
@@ -94,7 +125,9 @@ class T {
     }), s(e.removePage, () => {
       this.removePage(), this.updateStatusDisplay();
     }), s(e.refreshImages, async () => {
-      await this.fetchImages(), this.showError("圖片列表已更新", !0);
+      this.cleanupOutOfBounds(), await this.fetchImages(), this.showError(this.t.error.listUpdated, !0);
+    }), s(e.clearCanvas, () => {
+      confirm(this.t.confirm.clearCanvas) && (this.clearCanvas(), this.showError(this.t.error.canvasCleared, !0));
     }), e.save) {
       const t = document.getElementById(e.save);
       if (t) {
@@ -113,9 +146,9 @@ class T {
           let n = null;
           if (this.config.onLoad && (n = this.config.onLoad()), n) {
             const o = await this.load(n);
-            this.updateStatusDisplay(), o.skipped && o.skipped.length > 0 && this.showError(`已略過重複圖片: ${o.skipped.join(", ")}`);
+            this.updateStatusDisplay(), o.skipped && o.skipped.length > 0 && this.showError(`${this.t.error.skipped} ${o.skipped.join(", ")}`);
           } else
-            this.showError("無可讀取的佈局資料");
+            this.showError(this.t.error.noData);
         };
       }
     }
@@ -140,12 +173,12 @@ class T {
     if (this.config.statusDisplayId) {
       const e = document.getElementById(this.config.statusDisplayId);
       if (e && this.canvas) {
-        const s = this.canvas.getWidth(), t = this.canvas.getHeight();
+        const s = this.canvas.getWidth(), t = this.canvas.getHeight(), a = this.orientation === "portrait" ? this.t.status.portrait : this.t.status.landscape;
         e.innerHTML = `
-                <strong>設定:</strong> DPI ${this.config.dpi} | 
-                <strong>頁數:</strong> ${this.pageCount} | 
-                <strong>方向:</strong> ${this.orientation === "portrait" ? "直式" : "橫式"} | 
-                <strong>畫布尺寸:</strong> ${s} x ${t} px
+                <strong>${this.t.status.setting}</strong> ${this.t.status.dpi} ${this.config.dpi} | 
+                <strong>${this.t.status.pages}</strong> ${this.pageCount} | 
+                <strong>${this.t.status.orientation}</strong> ${a} | 
+                <strong>${this.t.status.size}</strong> ${s} x ${t} px
             `;
       }
     }
@@ -153,37 +186,39 @@ class T {
   async fetchImages() {
     try {
       const e = await fetch(this.config.apiEndpoint);
-      if (!e.ok) throw new Error("API 讀取失敗");
+      if (!e.ok) throw new Error(this.t.error.fetchFailed);
       const s = await e.json();
       this.images = s.data || [], this.renderSidebar();
     } catch (e) {
-      console.error("讀取圖片錯誤:", e), this.showError("讀取圖片列表失敗"), this.images = [], this.renderSidebar();
+      console.error(this.t.error.readError, e), this.showError(this.t.error.fetchFailed), this.images = [], this.renderSidebar();
     }
   }
   renderSidebar() {
     const e = document.getElementById("image-sidebar");
     e && (e.innerHTML = "", this.images.forEach((s) => {
       const t = document.createElement("div");
-      t.className = "image-item", t.dataset.id = s.img_id, t.onclick = () => this.addImageToCanvas(s.img_id), this.config.uniqueImages && this.isImageOnCanvas(s.img_id) && t.classList.add("disabled");
-      const a = document.createElement("img");
-      a.src = s.url || s.base64, a.draggable = !1;
-      const n = document.createElement("span");
-      n.className = "label", n.innerText = s.title || s.img_id, t.appendChild(a), t.appendChild(n), e.appendChild(t);
+      t.className = "image-item", t.dataset.id = s.img_id;
+      const a = this.config.uniqueImages && this.isImageOnCanvas(s.img_id);
+      t.onclick = () => {
+        a ? confirm(this.t.confirm.removeImage) && (this.canvas.getObjects().filter((d) => d.imageId === s.img_id).forEach((d) => this.canvas.remove(d)), this.updateSidebarStatus(s.img_id, !1), this.showError(this.t.error.removedFromCanvas, !0)) : this.addImageToCanvas(s.img_id);
+      }, a && (t.classList.add("disabled"), t.title = "已在A4上 (點擊可移除)", t.style.cursor = "help");
+      const n = document.createElement("img");
+      n.src = s.url || s.base64, n.draggable = !1;
+      const o = document.createElement("span");
+      o.className = "label", o.innerText = s.title || s.img_id, t.appendChild(n), t.appendChild(o), e.appendChild(t);
     }));
   }
   isImageOnCanvas(e) {
     return this.canvas.getObjects().some((s) => s.imageId === e);
   }
   updateSidebarStatus(e, s) {
-    if (!this.config.uniqueImages) return;
-    const t = document.querySelector(`.image-item[data-id="${e}"]`);
-    t && (s ? t.classList.add("disabled") : t.classList.remove("disabled"));
+    this.config.uniqueImages && this.renderSidebar();
   }
   async addImageToCanvas(e) {
     if (this.config.uniqueImages && this.isImageOnCanvas(e)) return;
     const s = this.images.find((n) => n.img_id === e);
     if (!s) return;
-    const t = s.url || s.base64, a = await v.fromURL(t);
+    const t = s.url || s.base64, a = await y.fromURL(t);
     a.set({
       imageId: e,
       left: 50,
@@ -195,7 +230,7 @@ class T {
     }), this.setupCustomControls(a), a.width > 200 && a.scaleToWidth(200), this.canvas.add(a), this.canvas.setActiveObject(a), this.updateSidebarStatus(e, !0);
   }
   setupCustomControls(e) {
-    delete e.controls.ml, delete e.controls.mr, delete e.controls.mt, delete e.controls.mb, delete e.controls.mtr, e.controls.deleteControl = S, e.controls.grayscaleControl = k, e.controls.rotate90Control = E;
+    delete e.controls.ml, delete e.controls.mr, delete e.controls.mt, delete e.controls.mb, delete e.controls.mtr, e.controls.deleteControl = k, e.controls.grayscaleControl = E, e.controls.rotate90Control = z;
   }
   setupLayout() {
     let e, s;
@@ -207,7 +242,7 @@ class T {
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const r = new y({
+        const r = new C({
           left: o * (a + this.gap),
           top: 0,
           width: a,
@@ -231,7 +266,7 @@ class T {
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const r = new y({
+        const r = new C({
           left: 0,
           top: o * (n + this.gap),
           width: a,
@@ -256,17 +291,17 @@ class T {
     this.orientation = e === "portrait" ? "landscape" : "portrait", this.canvas.getObjects().filter((t) => !t.isBackground).forEach((t) => {
       const a = t.getCenterPoint();
       let n = 0, o = 0, r = 0;
-      const l = this.pageWidthPx, d = this.pageHeightPx;
+      const d = this.pageWidthPx, h = this.pageHeightPx;
       if (e === "portrait")
-        n = Math.floor(a.x / (l + this.gap)), o = a.x - n * (l + this.gap), r = a.y;
+        n = Math.floor(a.x / (d + this.gap)), o = a.x - n * (d + this.gap), r = a.y;
       else {
-        const m = l;
-        n = Math.floor(a.y / (m + this.gap)), o = a.x, r = a.y - n * (m + this.gap);
+        const v = d;
+        n = Math.floor(a.y / (v + this.gap)), o = a.x, r = a.y - n * (v + this.gap);
       }
-      let h, c;
-      e === "portrait" ? (h = d - r, c = o, t.angle = (t.angle || 0) + 90) : (h = r, c = d - o, t.angle = (t.angle || 0) - 90);
+      let l, c;
+      e === "portrait" ? (l = h - r, c = o, t.angle = (t.angle || 0) + 90) : (l = r, c = h - o, t.angle = (t.angle || 0) - 90);
       let g, f;
-      this.orientation === "portrait" ? (g = n * (l + this.gap) + h, f = c) : (g = h, f = n * (l + this.gap) + c), t.setPositionByOrigin(new C(g, f), "center", "center"), t.setCoords();
+      this.orientation === "portrait" ? (g = n * (d + this.gap) + l, f = c) : (g = l, f = n * (d + this.gap) + c), t.setPositionByOrigin(new w(g, f), "center", "center"), t.setCoords();
     }), this.setupLayout();
   }
   setupEvents() {
@@ -285,26 +320,48 @@ class T {
       pageCount: this.pageCount,
       dpi: this.config.dpi,
       canvasObjects: s.objects,
-      extraParams: e
+      data: { ...this.config.data, ...e }
     };
+  }
+  async saveToBackend(e = {}) {
+    const s = this.save(e);
+    if (!this.config.saveEndpoint)
+      throw new Error("No saveEndpoint configured.");
+    try {
+      const t = await fetch(this.config.saveEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify(s)
+      });
+      if (!t.ok)
+        throw new Error(`HTTP error! status: ${t.status}`);
+      return await t.json();
+    } catch (t) {
+      throw console.error("Save failed:", t), t;
+    }
   }
   async load(e) {
     if (!e) return { success: !1, message: "No data" };
     this.canvas.clear(), this.orientation = e.orientation || "portrait", this.pageCount = e.pageCount || 1, this.setupLayout();
-    const s = e.canvasObjects || [], t = /* @__PURE__ */ new Set(), a = [];
-    for (const n of s) {
-      if (this.config.uniqueImages && t.has(n.imageId)) {
-        const r = this.images.find((d) => d.img_id === n.imageId), l = r ? r.title || r.img_id : n.imageId;
+    const s = e.canvasObjects || [], t = /* @__PURE__ */ new Set(), a = [], n = e.dpi || this.config.dpi, o = this.config.dpi / n;
+    for (const r of s) {
+      if (this.config.uniqueImages && t.has(r.imageId)) {
+        const h = this.images.find((c) => c.img_id === r.imageId), l = h ? h.title || h.img_id : r.imageId;
         a.push(l);
         continue;
       }
-      const o = this.images.find((r) => r.img_id === n.imageId);
-      if (o) {
-        t.add(n.imageId);
-        const r = o.url || o.base64, l = await v.fromURL(r);
-        l.set(n), l.set({ src: r }), n.filters && n.filters.length > 0 && l.applyFilters(), this.setupCustomControls(l), this.canvas.add(l), this.updateSidebarStatus(n.imageId, !0);
+      const d = this.images.find((h) => h.img_id === r.imageId);
+      if (d) {
+        t.add(r.imageId);
+        const h = { ...r };
+        Math.abs(o - 1) > 1e-4 && (h.left *= o, h.top *= o, h.scaleX = (h.scaleX || 1) * o, h.scaleY = (h.scaleY || 1) * o);
+        const l = d.url || d.base64, c = await y.fromURL(l);
+        c.set(h), c.set({ src: l }), r.filters && r.filters.length > 0 && c.applyFilters(), this.setupCustomControls(c), this.canvas.add(c), this.updateSidebarStatus(r.imageId, !0);
       } else
-        console.warn(`Image ID ${n.imageId} not found in API. Skipping.`);
+        console.warn(`Image ID ${r.imageId} not found in API. Skipping.`);
     }
     return this.canvas.requestRenderAll(), { success: !0, skipped: a };
   }
@@ -318,15 +375,15 @@ class T {
       if (this.orientation === "portrait")
         a = t * (e + this.gap), n = 0, o = e, r = s;
       else {
-        const h = s, c = e;
-        a = 0, n = t * (c + this.gap), o = h, r = c;
+        const l = s, c = e;
+        a = 0, n = t * (c + this.gap), o = l, r = c;
       }
-      const l = this.canvas.getObjects().filter((h) => !h.isBackground), d = [];
-      l.forEach((h) => {
-        const c = h.getCenterPoint();
-        c.x >= a && c.x <= a + o && c.y >= n && c.y <= n + r && d.push(h);
-      }), d.forEach((h) => {
-        h.imageId && this.updateSidebarStatus(h.imageId, !1), this.canvas.remove(h);
+      const d = this.canvas.getObjects().filter((l) => !l.isBackground), h = [];
+      d.forEach((l) => {
+        const c = l.getCenterPoint();
+        c.x >= a && c.x <= a + o && c.y >= n && c.y <= n + r && h.push(l);
+      }), h.forEach((l) => {
+        l.imageId && this.updateSidebarStatus(l.imageId, !1), this.canvas.remove(l);
       }), this.pageCount--, this.setupLayout();
     }
   }
@@ -339,10 +396,22 @@ class T {
       this.canvas.remove(a);
     }), this.canvas.requestRenderAll(), t.length;
   }
+  cleanupOutOfBounds() {
+    const e = this.canvas.getObjects().filter((a) => !a.isBackground), s = this.canvas.getWidth(), t = this.canvas.getHeight();
+    e.forEach((a) => {
+      const n = a.getCenterPoint();
+      (n.x < -50 || n.x > s + 50 || n.y < -50 || n.y > t + 50) && (this.canvas.remove(a), a.imageId && this.updateSidebarStatus(a.imageId, !1));
+    }), this.canvas.requestRenderAll();
+  }
+  clearCanvas() {
+    this.canvas.getObjects().filter((s) => !s.isBackground).forEach((s) => {
+      this.canvas.remove(s), s.imageId && this.updateSidebarStatus(s.imageId, !1);
+    }), this.canvas.requestRenderAll();
+  }
   destroy() {
     this.canvas && (this.canvas.dispose(), this.canvas = null);
   }
 }
 export {
-  T as FabricA4Layout
+  B as FabricA4Layout
 };

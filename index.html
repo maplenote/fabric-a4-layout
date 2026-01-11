@@ -15,7 +15,7 @@
             <button id="btn-add-page">增加頁數</button>
             <button id="btn-remove-page">減少頁數</button>
             <button id="btn-refresh-images">🔄 更新圖片</button>
-            <button id="btn-settings">⚙️ 畫布設定</button>
+            <button id="btn-settings">⚙️ A4設定</button>
             <button id="btn-save">儲存佈局 (看 Console)</button>
             <button id="btn-load">讀取佈局</button>
             
@@ -29,7 +29,7 @@
 
         <dialog id="settings-dialog" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <form method="dialog">
-                <h3 style="margin-top: 0;">畫布初始設定</h3>
+                <h3 style="margin-top: 0;">A4初始設定</h3>
                 <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <label>
                         DPI 設定:
@@ -39,11 +39,22 @@
                         A4 短邊像素 (px):
                         <input type="number" id="inp-px" value="397" style="width: 80px;">
                     </label>
+                    <label>
+                        預設方向:
+                        <select id="inp-orientation" style="padding: 2px;">
+                            <option value="portrait">直式 (Portrait)</option>
+                            <option value="landscape">橫式 (Landscape)</option>
+                        </select>
+                    </label>
+                    <label style="display: flex; flex-direction: column; gap: 5px;">
+                        自訂 Data (JSON):
+                        <textarea id="inp-data" rows="3" style="width: 100%; font-family: monospace; font-size: 12px; padding: 5px;" placeholder='{"key": "value"}'></textarea>
+                    </label>
                     <label style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
                         <input type="checkbox" id="inp-unique">
                         啟用圖片不重複限制
                     </label>
-                    <small style="color: #666; margin-top: 5px;">注意：套用設定將會<b>清空並重置</b>目前畫布。</small>
+                    <small style="color: #666; margin-top: 5px;">注意：套用設定將會<b>清空並重置</b>目前A4。</small>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" id="btn-cancel-settings">取消</button>
@@ -74,45 +85,20 @@
         window.layout = null;
         let lastSavedData = null;
 
-        // --- Settings Modal Logic (Decoupled from Layout Class for now, or could be integrated) ---
-        // For flexibility, keeping Settings Modal UI logic external is fine, 
-        // but the 'Apply' action will call layout methods.
-        const dialog = document.getElementById('settings-dialog');
-        const inpDpi = document.getElementById('inp-dpi');
-        const inpPx = document.getElementById('inp-px');
-        const inpUnique = document.getElementById('inp-unique');
-        const mmShort = 210;
-
-        inpDpi.oninput = () => {
-            const dpi = parseInt(inpDpi.value) || 0;
-            if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
-        };
-        inpPx.oninput = () => {
-            const px = parseInt(inpPx.value) || 0;
-            if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
-        };
-
-        document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
-        
-        // This button needs access to current config to trigger update
-        document.getElementById('btn-apply-settings').onclick = () => {
-            if (!window.layout) return;
+        function updateStatusDisplay(layout) {
+            const el = document.getElementById('status-display');
+            if (!layout || !layout.canvas) return;
             
-            const newDpi = parseInt(inpDpi.value) || 48;
-            const newUnique = inpUnique.checked;
-            dialog.close();
-
-            // Re-initialize with new settings (merging with old config is handled by createLayout wrapper)
-            // But here we need to call a layout method or helper.
-            // Let's use the helper `createLayout` again.
+            const totalW = layout.canvas.getWidth();
+            const totalH = layout.canvas.getHeight();
             
-            const newConfig = {
-                ...window.layout.config,
-                dpi: newDpi,
-                uniqueImages: newUnique
-            };
-            createLayout(newConfig);
-        };
+            el.innerHTML = `
+                <strong>設定:</strong> DPI ${layout.config.dpi} |
+                <strong>頁數:</strong> ${layout.pageCount} |
+                <strong>方向:</strong> ${layout.orientation === 'portrait' ? '直式' : '橫式'} |
+                <strong>A4尺寸:</strong> ${totalW} x ${totalH} px
+            `;
+        }
 
         // --- Layout Initialization Helper ---
         async function createLayout(config) {
@@ -135,127 +121,19 @@
             const layout = new FabricA4Layout(config);
             window.layout = layout;
             await layout.init();
+            updateStatusDisplay(layout);
         }
 
         // --- Main Entry ---
         async function init() {
-            const config = {
-                canvasId: 'c',
-                orientation: 'portrait',
-                apiEndpoint: './api/images.json',
-                uniqueImages: false,
-                dpi: 48,
-                
-                // New: Bind DOM IDs
-                statusDisplayId: 'status-display',
-                errorDisplayId: 'error-display',
-                buttons: {
-                    orientation: 'btn-orientation',
-                    addPage: 'btn-add-page',
-                    removePage: 'btn-remove-page',
-                    save: 'btn-save',
-                    load: 'btn-load',
-                    refreshImages: 'btn-refresh-images',
-                    settings: 'btn-settings' // We will hook this to open the modal
-                },
-                
-                // Custom Hooks (Optional)
-                onSave: (data) => {
-                    console.log('Saved Data:', data);
-                    lastSavedData = data;
-                    // Note: Success message logic moved inside class via showError/showStatus? 
-                    // Or keep alerts? The prompt asks for "error message block ID", implying UI display.
-                    alert('佈局已儲存 (Memory & Console)'); 
-                },
-                onLoad: (data) => {
-                    return lastSavedData; // The class calls this to get data? No, usually buttons trigger class methods.
-                    // The class will bind click events. The Load button needs data.
-                    // Implementation Detail: The class binding for 'load' usually expects the data source.
-                    // We can pass a data getter?
-                },
-                onSettingsClick: () => {
-                    // Pre-fill modal
-                    inpDpi.value = window.layout.config.dpi;
-                    inpUnique.checked = window.layout.config.uniqueImages;
-                    inpDpi.dispatchEvent(new Event('input'));
-                    dialog.showModal();
-                }
-            };
-
-            await createLayout(config);
-        }
-
-        init();
-    </script>
-</body>
-</html>
-            <!-- Sidebar -->
-            <div id="image-sidebar" class="sidebar">
-                載入圖片中...
-            </div>
-            
-            <!-- Canvas -->
-            <div class="canvas-wrapper">
-                <canvas id="c"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Script -->
-    <script type="module">
-        // Import our class. In Vite dev, this works directly.
-        import { FabricA4Layout } from './src/js/fabric.FabricA4Layout.js';
-        import './src/scss/fabric.FabricA4Layout.scss';
-
-        // Mock Save Data storage
-        let lastSavedData = null;
-
-        function updateStatusDisplay(layout) {
-            const el = document.getElementById('status-display');
-            if (!layout || !layout.canvas) return;
-            
-            const totalW = layout.canvas.getWidth();
-            const totalH = layout.canvas.getHeight();
-            
-            el.innerHTML = `
-                <strong>設定:</strong> DPI ${layout.config.dpi} | 
-                <strong>頁數:</strong> ${layout.pageCount} | 
-                <strong>方向:</strong> ${layout.orientation === 'portrait' ? '直式' : '橫式'} | 
-                <strong>畫布尺寸:</strong> ${totalW} x ${totalH} px
-            `;
-        }
-
-        async function createLayout(config) {
-            // 1. Cleanup old instance
-            if (window.layout) {
-                window.layout.destroy();
-                window.layout = null;
-            }
-
-            // 2. Ensure Canvas Element exists (Fabric dispose might remove wrapper but we need the element)
-            let c = document.getElementById('c');
-            if (!c) {
-                const wrapper = document.querySelector('.canvas-wrapper');
-                c = document.createElement('canvas');
-                c.id = 'c';
-                wrapper.appendChild(c);
-            }
-
-            // 3. Create new instance
-            const layout = new FabricA4Layout(config);
-            window.layout = layout; 
-            await layout.init();
-            updateStatusDisplay(layout);
-            return layout;
-        }
-
-        async function init() {
             let currentConfig = {
                 canvasId: 'c',
                 orientation: 'portrait',
-                apiEndpoint: './api/images.json', 
+                apiEndpoint: './api/images.json',
+                // saveEndpoint: '/api/save',
                 uniqueImages: false,
-                dpi: 48 
+                dpi: 48,
+                data: { "page_pk": "123", "user_note": "Demo Note" }
             };
 
             await createLayout(currentConfig);
@@ -265,9 +143,10 @@
             const inpDpi = document.getElementById('inp-dpi');
             const inpPx = document.getElementById('inp-px');
             const inpUnique = document.getElementById('inp-unique');
-
-            // Sync Logic
+            const inpOrientation = document.getElementById('inp-orientation');
+            const inpData = document.getElementById('inp-data');
             const mmShort = 210;
+
             inpDpi.oninput = () => {
                 const dpi = parseInt(inpDpi.value) || 0;
                 if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
@@ -277,34 +156,51 @@
                 if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
             };
 
+            document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
+
             document.getElementById('btn-settings').onclick = () => {
                 // Load current values
                 inpDpi.value = window.layout.config.dpi;
                 inpUnique.checked = window.layout.config.uniqueImages;
+                // Use current actual orientation
+                inpOrientation.value = window.layout.orientation || 'portrait';
+                // Load current data
+                inpData.value = JSON.stringify(window.layout.config.data || {}, null, 2);
+                
                 inpDpi.dispatchEvent(new Event('input')); // trigger sync
                 dialog.showModal();
             };
 
-            document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
-
             document.getElementById('btn-apply-settings').onclick = async () => {
                 const newDpi = parseInt(inpDpi.value) || 48;
                 const newUnique = inpUnique.checked;
+                const newOrientation = inpOrientation.value;
+                
+                let newData = {};
+                try {
+                    newData = JSON.parse(inpData.value || '{}');
+                } catch (e) {
+                    alert('JSON 格式錯誤，請檢查自訂 Data 內容！');
+                    return;
+                }
+
                 dialog.close();
                 
                 // Update Config
                 currentConfig = {
                     ...currentConfig,
                     dpi: newDpi,
-                    uniqueImages: newUnique
+                    uniqueImages: newUnique,
+                    orientation: newOrientation,
+                    data: newData
                 };
 
                 // Re-init
                 await createLayout(currentConfig);
-                alert(`畫布已重置！\nDPI: ${newDpi}\n不重複限制: ${newUnique ? '開啟' : '關閉'}`);
+                alert(`A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${newUnique ? '開啟' : '關閉'}`);
             };
 
-            // Bind Buttons
+             // Bind Buttons
             document.getElementById('btn-orientation').onclick = () => {
                 window.layout.toggleOrientation();
                 updateStatusDisplay(window.layout);
@@ -319,12 +215,39 @@
                 window.layout.removePage();
                 updateStatusDisplay(window.layout);
             };
+            
+            document.getElementById('btn-refresh-images').onclick = () => {
+                 // Manual refresh trigger if needed, though class binds it too if ID passed.
+                 // But wait, the class bindControls uses 'buttons' config. 
+                 // We should probably rely on class binding OR manual binding.
+                 // In this file, I see manual bindings below. 
+                 // The class also binds if IDs match. 
+                 // Let's keep manual bindings for safety as they are explicit here.
+                 window.layout.cleanupOutOfBounds(); 
+                 window.layout.fetchImages().then(() => alert('圖片列表已更新'));
+            };
 
-            document.getElementById('btn-save').onclick = () => {
+            document.getElementById('btn-save').onclick = async () => {
+                if (window.layout.config.saveEndpoint) {
+                    try {
+                        const res = await window.layout.saveToBackend({ demo_user: 'user_123' });
+                        alert('佈局已成功儲存至伺服器！');
+                        console.log('Server Response:', res);
+                        return;
+                    } catch (e) {
+                        console.warn('Backend save failed (Demo mode?), falling back to console.', e);
+                        alert(`後端儲存失敗 (可能是 Demo 無真實 API): ${e.message}\n\n資料將顯示於 Console。`);
+                    }
+                } else {
+                    console.log('No saveEndpoint configured. Using Console mode.');
+                }
+
                 const data = window.layout.save({ demo_user: 'user_123' });
-                console.log('Saved Data:', data);
+                console.log('Saved Data (Console Mode):', data);
                 lastSavedData = data;
-                alert('佈局已儲存 (請看 Console F12)！並已暫存於記憶體中。');
+                if (!window.layout.config.saveEndpoint) {
+                    alert('佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)。');
+                }
             };
 
             document.getElementById('btn-load').onclick = async () => {
@@ -342,6 +265,8 @@
                 }
             };
         }
+
+        init();
     </script>
 </body>
 </html>

@@ -71,7 +71,7 @@ $item-border: #ddd;
       &.disabled {
         opacity: 0.4;
         cursor: not-allowed;
-        pointer-events: none;
+        /* pointer-events: none; Removed to allow clicking for removal */
       }
     }
   }

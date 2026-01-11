@@ -12,7 +12,7 @@
 
 ```html
 <!-- 1. 引入 Fabric.js v7 (必須) -->
-<script src="https://unpkg.com/fabric@7.1.0/dist/fabric.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fabric@7.1.0/dist/index.min.js"></script>
 
 <!-- 2. 引入樣式 -->
 <link rel="stylesheet" href="dist/css/fabric.FabricA4Layout.min.css">
@@ -26,6 +26,7 @@
 ```
 
 或者使用 UMD 方式 (若非 Module 環境):
+
 ```html
 <script src="dist/js/fabric.FabricA4Layout.min.js"></script>
 <script>
@@ -88,10 +89,12 @@ await layout.init();
 | :--- | :--- | :--- | :--- |
 | `canvasId` | String | `required` | `<canvas>` 元素的 ID。 |
 | `apiEndpoint` | String | `required` | 取得圖片列表的 API URL (GET)。 |
+| `saveEndpoint`| String | `null` | (選填) 儲存佈局的後端 API URL (POST)。 |
 | `dpi` | Number | `48` | 版面解析度，影響像素換算 (範圍 24-192)。 |
 | `orientation` | String | `'portrait'` | 初始方向 `'portrait'` (直) 或 `'landscape'` (橫)。 |
 | `uniqueImages` | Boolean | `false` | 若為 `true`，同一張圖片僅能被加入畫布一次。 |
 | `saveWithBase64`| Boolean | `false` | 存檔時是否保留圖片的 Base64 資料 (建議 false 以減少傳輸量)。 |
+| `data` | Object | `{}` | (選填) 自訂初始化資料，將隨存檔一起送出。 |
 | `statusDisplayId`| String | `null` | 指定顯示狀態資訊 (頁數/尺寸) 的 DOM ID。 |
 | `errorDisplayId` | String | `null` | 指定顯示錯誤或警告訊息的 DOM ID。 |
 | `buttons` | Object | `{}` | UI 按鈕綁定設定 (見下節)。 |
@@ -133,8 +136,9 @@ buttons: {
   ]
 }
 ```
-*   **img_id**: 圖片唯一識別碼 (必須)。
-*   **url/base64**: 擇一提供，若都有則優先使用 `url`。
+
+* **img_id**: 圖片唯一識別碼 (必須)。
+* **url/base64**: 擇一提供，若都有則優先使用 `url`。
 
 ### 2. 存檔格式 (`Save`)
 
@@ -146,7 +150,7 @@ buttons: {
   "orientation": "portrait",
   "pageCount": 2,
   "dpi": 48,
-  "extraParams": { "user_id": "123" }, // 您傳入的額外參數
+  "data": { "page_pk": "123", "user_id": "456" }, // config.data + extraParams 的聯集
   "canvasObjects": [
     {
       "type": "image",
@@ -164,7 +168,23 @@ buttons: {
 ### 3. 讀檔格式 (`Load`)
 
 `load(data)` 方法接受上述存檔格式的 JSON 物件。
-*   **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片，並回傳 `{ skipped: ['filename', ...] }` 供前端顯示警告。
+
+* **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片，並回傳 `{ skipped: ['filename', ...] }` 供前端顯示警告。
+
+### 4. 儲存至後端 (`saveToBackend`)
+
+若初始化時有設定 `saveEndpoint`，可呼叫此非同步方法直接執行 AJAX POST 儲存：
+
+```javascript
+try {
+    const response = await layout.saveToBackend({ timestamp: Date.now() });
+    console.log('儲存成功:', response);
+} catch (err) {
+    console.error('儲存失敗:', err);
+}
+```
+
+此方法會將 `save()` 的產出作為 Body (JSON) 發送至指定的 URL。
 
 ---
 
@@ -179,3 +199,9 @@ npm run dev
 # 打包 Library (輸出至 dist/)
 npm run build
 ```
+
+---
+
+## 🛠️ 開發工具說明
+
+本專案由 Gemini CLI (Gemini 3 / auto model) + Vibe coding 開發，Thanks AI。

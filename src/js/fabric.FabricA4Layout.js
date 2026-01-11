@@ -1,4 +1,5 @@
 import { Canvas, Rect, FabricImage, Control, util, filters, Point } from 'fabric';
+import { defaultLocale } from './locale.js';
 import '../scss/fabric.FabricA4Layout.scss';
 
 // --- Custom Control Definitions (Module Level) ---
@@ -44,10 +45,14 @@ const deleteControl = new Control({
     mouseUpHandler: (eventData, transform) => {
         const target = transform.target;
         const canvas = target.canvas;
+        
+        // Remove first, then notify
+        canvas.remove(target);
+        
         if (target.imageId) {
              canvas.fire('object:custom:delete', { target });
         }
-        canvas.remove(target);
+        
         canvas.requestRenderAll();
         return true;
     },
@@ -182,10 +187,20 @@ export class FabricA4Layout {
       orientation: 'portrait',
       saveWithBase64: false,
       uniqueImages: false,
+      saveEndpoint: null,
+      data: {},
       buttons: {}, // Map of action -> buttonId
       statusDisplayId: null,
       errorDisplayId: null,
+      locale: {},
       ...config
+    };
+
+    // Merge Locale
+    this.t = {
+        status: { ...defaultLocale.status, ...(this.config.locale?.status || {}) },
+        error: { ...defaultLocale.error, ...(this.config.locale?.error || {}) },
+        confirm: { ...defaultLocale.confirm, ...(this.config.locale?.confirm || {}) }
     };
 
     if (this.config.dpi < 24) this.config.dpi = 24;
@@ -212,7 +227,7 @@ export class FabricA4Layout {
     });
 
     this.setupLayout();
-    await this.fetchImages(); // Render sidebar happens here
+    await this.fetchImages(); 
     this.setupEvents();
     this.bindControls();
     this.updateStatusDisplay();
@@ -225,7 +240,6 @@ export class FabricA4Layout {
           if (id) {
               const el = document.getElementById(id);
               if (el) {
-                  // Remove old listener if any (clone node trick)
                   const newEl = el.cloneNode(true);
                   el.parentNode.replaceChild(newEl, el);
                   newEl.onclick = fn;
@@ -249,8 +263,16 @@ export class FabricA4Layout {
       });
 
       bind(btns.refreshImages, async () => {
+          this.cleanupOutOfBounds(); 
           await this.fetchImages();
-          this.showError('圖片列表已更新', true); // Show as info
+          this.showError(this.t.error.listUpdated, true);
+      });
+
+      bind(btns.clearCanvas, () => {
+          if (confirm(this.t.confirm.clearCanvas)) {
+              this.clearCanvas();
+              this.showError(this.t.error.canvasCleared, true);
+          }
       });
 
       if (btns.save) {
@@ -277,17 +299,15 @@ export class FabricA4Layout {
                       const res = await this.load(data);
                       this.updateStatusDisplay();
                       if (res.skipped && res.skipped.length > 0) {
-                          this.showError(`已略過重複圖片: ${res.skipped.join(', ')}`);
+                          this.showError(`${this.t.error.skipped} ${res.skipped.join(', ')}`);
                       }
                   } else {
-                      this.showError('無可讀取的佈局資料');
+                      this.showError(this.t.error.noData);
                   }
               };
           }
       }
 
-      // Settings is usually bound externally because it opens a modal, 
-      // but we can provide a hook if needed. Here we expect index.html to handle modal logic.
       if (btns.settings && this.config.onSettingsClick) {
           const el = document.getElementById(btns.settings);
           if (el) {
@@ -324,12 +344,13 @@ export class FabricA4Layout {
           if (el && this.canvas) {
             const totalW = this.canvas.getWidth();
             const totalH = this.canvas.getHeight();
+            const dir = this.orientation === 'portrait' ? this.t.status.portrait : this.t.status.landscape;
             
             el.innerHTML = `
-                <strong>設定:</strong> DPI ${this.config.dpi} | 
-                <strong>頁數:</strong> ${this.pageCount} | 
-                <strong>方向:</strong> ${this.orientation === 'portrait' ? '直式' : '橫式'} | 
-                <strong>畫布尺寸:</strong> ${totalW} x ${totalH} px
+                <strong>${this.t.status.setting}</strong> ${this.t.status.dpi} ${this.config.dpi} | 
+                <strong>${this.t.status.pages}</strong> ${this.pageCount} | 
+                <strong>${this.t.status.orientation}</strong> ${dir} | 
+                <strong>${this.t.status.size}</strong> ${totalW} x ${totalH} px
             `;
           }
       }
@@ -338,13 +359,13 @@ export class FabricA4Layout {
   async fetchImages() {
     try {
       const response = await fetch(this.config.apiEndpoint);
-      if (!response.ok) throw new Error('API 讀取失敗');
+      if (!response.ok) throw new Error(this.t.error.fetchFailed);
       const json = await response.json();
       this.images = json.data || [];
       this.renderSidebar();
     } catch (e) {
-      console.error('讀取圖片錯誤:', e);
-      this.showError('讀取圖片列表失敗');
+      console.error(this.t.error.readError, e);
+      this.showError(this.t.error.fetchFailed);
       this.images = [];
       this.renderSidebar();
     }
@@ -360,10 +381,26 @@ export class FabricA4Layout {
       const div = document.createElement('div');
       div.className = 'image-item';
       div.dataset.id = imgData.img_id;
-      div.onclick = () => this.addImageToCanvas(imgData.img_id);
+      
+      const isOnCanvas = this.config.uniqueImages && this.isImageOnCanvas(imgData.img_id);
 
-      if (this.config.uniqueImages && this.isImageOnCanvas(imgData.img_id)) {
+      div.onclick = () => {
+          if (isOnCanvas) {
+              if (confirm(this.t.confirm.removeImage)) {
+                  const objects = this.canvas.getObjects().filter(o => o.imageId === imgData.img_id);
+                  objects.forEach(o => this.canvas.remove(o));
+                  this.updateSidebarStatus(imgData.img_id, false);
+                  this.showError(this.t.error.removedFromCanvas, true);
+              }
+          } else {
+              this.addImageToCanvas(imgData.img_id);
+          }
+      };
+
+      if (isOnCanvas) {
         div.classList.add('disabled');
+        div.title = "已在A4上 (點擊可移除)";
+        div.style.cursor = "help"; 
       }
 
       const img = document.createElement('img');
@@ -386,11 +423,7 @@ export class FabricA4Layout {
 
   updateSidebarStatus(imgId, disabled) {
     if (!this.config.uniqueImages) return;
-    const sidebarItem = document.querySelector(`.image-item[data-id="${imgId}"]`);
-    if (sidebarItem) {
-      if (disabled) sidebarItem.classList.add('disabled');
-      else sidebarItem.classList.remove('disabled');
-    }
+    this.renderSidebar();
   }
 
   async addImageToCanvas(imgId) {
@@ -596,8 +629,36 @@ export class FabricA4Layout {
       pageCount: this.pageCount,
       dpi: this.config.dpi,
       canvasObjects: json.objects,
-      extraParams
+      data: { ...this.config.data, ...extraParams }
     };
+  }
+
+  async saveToBackend(extraParams = {}) {
+      const data = this.save(extraParams);
+      
+      if (!this.config.saveEndpoint) {
+          throw new Error('No saveEndpoint configured.');
+      }
+
+      try {
+          const response = await fetch(this.config.saveEndpoint, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+              },
+              body: JSON.stringify(data)
+          });
+
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          return await response.json();
+      } catch (error) {
+          console.error('Save failed:', error);
+          throw error;
+      }
   }
 
   async load(data) {
@@ -612,9 +673,11 @@ export class FabricA4Layout {
     const objects = data.canvasObjects || [];
     const seenIds = new Set();
     const skippedItems = [];
+
+    const loadedDpi = data.dpi || this.config.dpi;
+    const scaleFactor = this.config.dpi / loadedDpi;
     
     for (const objData of objects) {
-       // Uniqueness Check
        if (this.config.uniqueImages && seenIds.has(objData.imageId)) {
            const duplicateImg = this.images.find(i => i.img_id === objData.imageId);
            const name = duplicateImg ? (duplicateImg.title || duplicateImg.img_id) : objData.imageId;
@@ -627,9 +690,17 @@ export class FabricA4Layout {
        if (apiImg) {
          seenIds.add(objData.imageId); 
 
+         const scaledData = { ...objData };
+         if (Math.abs(scaleFactor - 1) > 0.0001) {
+             scaledData.left *= scaleFactor;
+             scaledData.top *= scaleFactor;
+             scaledData.scaleX = (scaledData.scaleX || 1) * scaleFactor;
+             scaledData.scaleY = (scaledData.scaleY || 1) * scaleFactor;
+         }
+
          const imgSrc = apiImg.url || apiImg.base64;
          const imgObj = await FabricImage.fromURL(imgSrc);
-         imgObj.set(objData);
+         imgObj.set(scaledData);
          imgObj.set({ src: imgSrc }); 
          
          if (objData.filters && objData.filters.length > 0) {
@@ -723,6 +794,35 @@ export class FabricA4Layout {
       
       this.canvas.requestRenderAll();
       return objectsToRemove.length;
+  }
+
+  cleanupOutOfBounds() {
+      const objects = this.canvas.getObjects().filter(o => !o.isBackground);
+      const totalW = this.canvas.getWidth();
+      const totalH = this.canvas.getHeight();
+      
+      objects.forEach(obj => {
+          const center = obj.getCenterPoint();
+          // Allow some buffer (e.g. 50px)
+          if (center.x < -50 || center.x > totalW + 50 || center.y < -50 || center.y > totalH + 50) {
+              this.canvas.remove(obj);
+              if (obj.imageId) {
+                  this.updateSidebarStatus(obj.imageId, false);
+              }
+          }
+      });
+      this.canvas.requestRenderAll();
+  }
+
+  clearCanvas() {
+      const objects = this.canvas.getObjects().filter(o => !o.isBackground);
+      objects.forEach(obj => {
+          this.canvas.remove(obj);
+          if (obj.imageId) {
+              this.updateSidebarStatus(obj.imageId, false);
+          }
+      });
+      this.canvas.requestRenderAll();
   }
 
   destroy() {
