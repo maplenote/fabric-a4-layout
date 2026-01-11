@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric.js A4 排版系統範例</title>
+    <!-- In development, we use the source SCSS (Vite handles it) -->
+    <!-- In production, this would be <link rel="stylesheet" href="dist/css/fabric.FabricA4Layout.min.css"> -->
+</head>
+<body>
+    <div id="app">
+        <div style="padding: 10px; background: #eee; border-bottom: 1px solid #ccc; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <strong>功能控制:</strong>
+            <button id="btn-orientation">切換版面方向 (直/橫)</button>
+            <button id="btn-add-page">增加頁數</button>
+            <button id="btn-remove-page">減少頁數</button>
+            <button id="btn-refresh-images">🔄 更新圖片</button>
+            <button id="btn-settings">⚙️ 畫布設定</button>
+            <button id="btn-save">儲存佈局 (看 Console)</button>
+            <button id="btn-load">讀取佈局</button>
+            
+            <span id="status-display" style="margin-left: auto; font-size: 14px; color: #555; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #ddd;">
+                載入中...
+            </span>
+        </div>
+        
+        <!-- Error Display Container -->
+        <div id="error-display" style="display: none; background: #ffebee; color: #c62828; padding: 10px; border-bottom: 1px solid #ef9a9a; font-size: 14px;"></div>
+
+        <dialog id="settings-dialog" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <form method="dialog">
+                <h3 style="margin-top: 0;">畫布初始設定</h3>
+                <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <label>
+                        DPI 設定:
+                        <input type="number" id="inp-dpi" value="48" min="24" max="192" style="width: 80px;">
+                    </label>
+                    <label>
+                        A4 短邊像素 (px):
+                        <input type="number" id="inp-px" value="397" style="width: 80px;">
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                        <input type="checkbox" id="inp-unique">
+                        啟用圖片不重複限制
+                    </label>
+                    <small style="color: #666; margin-top: 5px;">注意：套用設定將會<b>清空並重置</b>目前畫布。</small>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" id="btn-cancel-settings">取消</button>
+                    <button type="button" id="btn-apply-settings" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">套用並重置</button>
+                </div>
+            </form>
+        </dialog>
+
+        <div class="layout-container">
+            <!-- Sidebar -->
+            <div id="image-sidebar" class="sidebar">
+                載入圖片中...
+            </div>
+            
+            <!-- Canvas -->
+            <div class="canvas-wrapper">
+                <canvas id="c"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script type="module">
+        import { FabricA4Layout } from './src/js/fabric.FabricA4Layout.js';
+        import './src/scss/fabric.FabricA4Layout.scss';
+
+        // Global reference
+        window.layout = null;
+        let lastSavedData = null;
+
+        // --- Settings Modal Logic (Decoupled from Layout Class for now, or could be integrated) ---
+        // For flexibility, keeping Settings Modal UI logic external is fine, 
+        // but the 'Apply' action will call layout methods.
+        const dialog = document.getElementById('settings-dialog');
+        const inpDpi = document.getElementById('inp-dpi');
+        const inpPx = document.getElementById('inp-px');
+        const inpUnique = document.getElementById('inp-unique');
+        const mmShort = 210;
+
+        inpDpi.oninput = () => {
+            const dpi = parseInt(inpDpi.value) || 0;
+            if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
+        };
+        inpPx.oninput = () => {
+            const px = parseInt(inpPx.value) || 0;
+            if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
+        };
+
+        document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
+        
+        // This button needs access to current config to trigger update
+        document.getElementById('btn-apply-settings').onclick = () => {
+            if (!window.layout) return;
+            
+            const newDpi = parseInt(inpDpi.value) || 48;
+            const newUnique = inpUnique.checked;
+            dialog.close();
+
+            // Re-initialize with new settings (merging with old config is handled by createLayout wrapper)
+            // But here we need to call a layout method or helper.
+            // Let's use the helper `createLayout` again.
+            
+            const newConfig = {
+                ...window.layout.config,
+                dpi: newDpi,
+                uniqueImages: newUnique
+            };
+            createLayout(newConfig);
+        };
+
+        // --- Layout Initialization Helper ---
+        async function createLayout(config) {
+            // Cleanup
+            if (window.layout) {
+                window.layout.destroy();
+                window.layout = null;
+            }
+
+            // Ensure Canvas
+            let c = document.getElementById(config.canvasId);
+            if (!c) {
+                const wrapper = document.querySelector('.canvas-wrapper');
+                c = document.createElement('canvas');
+                c.id = config.canvasId;
+                wrapper.appendChild(c);
+            }
+
+            // Init
+            const layout = new FabricA4Layout(config);
+            window.layout = layout;
+            await layout.init();
+        }
+
+        // --- Main Entry ---
+        async function init() {
+            const config = {
+                canvasId: 'c',
+                orientation: 'portrait',
+                apiEndpoint: './api/images.json',
+                uniqueImages: false,
+                dpi: 48,
+                
+                // New: Bind DOM IDs
+                statusDisplayId: 'status-display',
+                errorDisplayId: 'error-display',
+                buttons: {
+                    orientation: 'btn-orientation',
+                    addPage: 'btn-add-page',
+                    removePage: 'btn-remove-page',
+                    save: 'btn-save',
+                    load: 'btn-load',
+                    refreshImages: 'btn-refresh-images',
+                    settings: 'btn-settings' // We will hook this to open the modal
+                },
+                
+                // Custom Hooks (Optional)
+                onSave: (data) => {
+                    console.log('Saved Data:', data);
+                    lastSavedData = data;
+                    // Note: Success message logic moved inside class via showError/showStatus? 
+                    // Or keep alerts? The prompt asks for "error message block ID", implying UI display.
+                    alert('佈局已儲存 (Memory & Console)'); 
+                },
+                onLoad: (data) => {
+                    return lastSavedData; // The class calls this to get data? No, usually buttons trigger class methods.
+                    // The class will bind click events. The Load button needs data.
+                    // Implementation Detail: The class binding for 'load' usually expects the data source.
+                    // We can pass a data getter?
+                },
+                onSettingsClick: () => {
+                    // Pre-fill modal
+                    inpDpi.value = window.layout.config.dpi;
+                    inpUnique.checked = window.layout.config.uniqueImages;
+                    inpDpi.dispatchEvent(new Event('input'));
+                    dialog.showModal();
+                }
+            };
+
+            await createLayout(config);
+        }
+
+        init();
+    </script>
+</body>
+</html>
+            <!-- Sidebar -->
+            <div id="image-sidebar" class="sidebar">
+                載入圖片中...
+            </div>
+            
+            <!-- Canvas -->
+            <div class="canvas-wrapper">
+                <canvas id="c"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script type="module">
+        // Import our class. In Vite dev, this works directly.
+        import { FabricA4Layout } from './src/js/fabric.FabricA4Layout.js';
+        import './src/scss/fabric.FabricA4Layout.scss';
+
+        // Mock Save Data storage
+        let lastSavedData = null;
+
+        function updateStatusDisplay(layout) {
+            const el = document.getElementById('status-display');
+            if (!layout || !layout.canvas) return;
+            
+            const totalW = layout.canvas.getWidth();
+            const totalH = layout.canvas.getHeight();
+            
+            el.innerHTML = `
+                <strong>設定:</strong> DPI ${layout.config.dpi} | 
+                <strong>頁數:</strong> ${layout.pageCount} | 
+                <strong>方向:</strong> ${layout.orientation === 'portrait' ? '直式' : '橫式'} | 
+                <strong>畫布尺寸:</strong> ${totalW} x ${totalH} px
+            `;
+        }
+
+        async function createLayout(config) {
+            // 1. Cleanup old instance
+            if (window.layout) {
+                window.layout.destroy();
+                window.layout = null;
+            }
+
+            // 2. Ensure Canvas Element exists (Fabric dispose might remove wrapper but we need the element)
+            let c = document.getElementById('c');
+            if (!c) {
+                const wrapper = document.querySelector('.canvas-wrapper');
+                c = document.createElement('canvas');
+                c.id = 'c';
+                wrapper.appendChild(c);
+            }
+
+            // 3. Create new instance
+            const layout = new FabricA4Layout(config);
+            window.layout = layout; 
+            await layout.init();
+            updateStatusDisplay(layout);
+            return layout;
+        }
+
+        async function init() {
+            let currentConfig = {
+                canvasId: 'c',
+                orientation: 'portrait',
+                apiEndpoint: './api/images.json', 
+                uniqueImages: false,
+                dpi: 48 
+            };
+
+            await createLayout(currentConfig);
+
+            // Settings Logic
+            const dialog = document.getElementById('settings-dialog');
+            const inpDpi = document.getElementById('inp-dpi');
+            const inpPx = document.getElementById('inp-px');
+            const inpUnique = document.getElementById('inp-unique');
+
+            // Sync Logic
+            const mmShort = 210;
+            inpDpi.oninput = () => {
+                const dpi = parseInt(inpDpi.value) || 0;
+                if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
+            };
+            inpPx.oninput = () => {
+                const px = parseInt(inpPx.value) || 0;
+                if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
+            };
+
+            document.getElementById('btn-settings').onclick = () => {
+                // Load current values
+                inpDpi.value = window.layout.config.dpi;
+                inpUnique.checked = window.layout.config.uniqueImages;
+                inpDpi.dispatchEvent(new Event('input')); // trigger sync
+                dialog.showModal();
+            };
+
+            document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
+
+            document.getElementById('btn-apply-settings').onclick = async () => {
+                const newDpi = parseInt(inpDpi.value) || 48;
+                const newUnique = inpUnique.checked;
+                dialog.close();
+                
+                // Update Config
+                currentConfig = {
+                    ...currentConfig,
+                    dpi: newDpi,
+                    uniqueImages: newUnique
+                };
+
+                // Re-init
+                await createLayout(currentConfig);
+                alert(`畫布已重置！\nDPI: ${newDpi}\n不重複限制: ${newUnique ? '開啟' : '關閉'}`);
+            };
+
+            // Bind Buttons
+            document.getElementById('btn-orientation').onclick = () => {
+                window.layout.toggleOrientation();
+                updateStatusDisplay(window.layout);
+            };
+
+            document.getElementById('btn-add-page').onclick = () => {
+                window.layout.addPage();
+                updateStatusDisplay(window.layout);
+            };
+
+            document.getElementById('btn-remove-page').onclick = () => {
+                window.layout.removePage();
+                updateStatusDisplay(window.layout);
+            };
+
+            document.getElementById('btn-save').onclick = () => {
+                const data = window.layout.save({ demo_user: 'user_123' });
+                console.log('Saved Data:', data);
+                lastSavedData = data;
+                alert('佈局已儲存 (請看 Console F12)！並已暫存於記憶體中。');
+            };
+
+            document.getElementById('btn-load').onclick = async () => {
+                if (lastSavedData) {
+                    const result = await window.layout.load(lastSavedData);
+                    updateStatusDisplay(window.layout);
+                    
+                    if (result.skipped && result.skipped.length > 0) {
+                        alert(`佈局讀取成功！\n\n注意：根據「圖片不重複限制」，已自動移除 ${result.skipped.length} 張重複的圖片。\n(檔名: ${result.skipped.join(', ')})`);
+                    } else {
+                        alert('佈局讀取成功！');
+                    }
+                } else {
+                    alert('尚未儲存任何佈局！請先試著擺放圖片並儲存。');
+                }
+            };
+        }
+    </script>
+</body>
+</html>

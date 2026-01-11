@@ -1,3 +1,181 @@
-# fabric-a4-layout
+# Fabric A4 Layout Tool
 
-一個輕量級的原生 JavaScript (ES6) 排版工具，使用 Fabric.js v7 實作單一畫布模擬多頁 A4 編輯。支援圖片拖曳、自訂刪除控制項、自動流向排版 (直/橫)，並配合 PHP 後端輸出 .docx 文件
+一個基於 **Fabric.js v7** 的模組化 A4 排版引擎。支援單一畫布模擬多頁排版、直/橫向切換、圖片拖曳、不重複檢查以及完整的存取功能。
+
+## 🚀 快速開始 (Quick Start)
+
+### 1. 引入檔案 (Manual Include)
+
+本專案為私人專案，請直接將 `dist/` 資料夾內的檔案複製到您的專案中。
+
+由於本工具依賴 **Fabric.js v7**，請務必在使用前引入 Fabric.js。
+
+```html
+<!-- 1. 引入 Fabric.js v7 (必須) -->
+<script src="https://unpkg.com/fabric@7.1.0/dist/fabric.min.js"></script>
+
+<!-- 2. 引入樣式 -->
+<link rel="stylesheet" href="dist/css/fabric.FabricA4Layout.min.css">
+
+<!-- 3. 引入本工具 (ES Module 方式) -->
+<script type="module">
+  import { FabricA4Layout } from './dist/js/fabric.FabricA4Layout.min.js';
+  
+  // 初始化...
+</script>
+```
+
+或者使用 UMD 方式 (若非 Module 環境):
+```html
+<script src="dist/js/fabric.FabricA4Layout.min.js"></script>
+<script>
+  // FabricA4Layout 會掛載在 window 下 (視 Vite 設定而定，建議使用 ES Module)
+</script>
+```
+
+### 2. HTML 結構
+
+準備一個 Canvas 容器與操作按鈕：
+
+```html
+<div class="toolbar">
+    <button id="btn-orientation">轉向</button>
+    <button id="btn-save">存檔</button>
+</div>
+
+<div class="layout-container">
+    <div id="image-sidebar" class="sidebar"></div> <!-- 圖片列表容器 -->
+    <div class="canvas-wrapper">
+        <canvas id="c"></canvas> <!-- 畫布 ID -->
+    </div>
+</div>
+<!-- 狀態顯示與錯誤訊息 (可選) -->
+<div id="status-display"></div>
+<div id="error-display"></div>
+```
+
+### 3. 初始化
+
+```javascript
+const layout = new FabricA4Layout({
+    canvasId: 'c',                // 畫布 DOM ID
+    apiEndpoint: '/api/images',   // 圖片列表 API
+    dpi: 48,                      // 設定解析度
+    uniqueImages: false,          // 是否限制圖片不重複
+    
+    // 綁定 UI 按鈕 (傳入 DOM ID)
+    buttons: {
+        orientation: 'btn-orientation',
+        save: 'btn-save',
+        // ... 其他按鈕
+    },
+    
+    // 指定訊息顯示位置 (傳入 DOM ID)
+    statusDisplayId: 'status-display',
+    errorDisplayId: 'error-display'
+});
+
+await layout.init();
+```
+
+---
+
+## ⚙️ 初始化設定 (Configuration)
+
+`new FabricA4Layout(config)` 接受以下參數：
+
+| 參數 | 類型 | 預設值 | 說明 |
+| :--- | :--- | :--- | :--- |
+| `canvasId` | String | `required` | `<canvas>` 元素的 ID。 |
+| `apiEndpoint` | String | `required` | 取得圖片列表的 API URL (GET)。 |
+| `dpi` | Number | `48` | 版面解析度，影響像素換算 (範圍 24-192)。 |
+| `orientation` | String | `'portrait'` | 初始方向 `'portrait'` (直) 或 `'landscape'` (橫)。 |
+| `uniqueImages` | Boolean | `false` | 若為 `true`，同一張圖片僅能被加入畫布一次。 |
+| `saveWithBase64`| Boolean | `false` | 存檔時是否保留圖片的 Base64 資料 (建議 false 以減少傳輸量)。 |
+| `statusDisplayId`| String | `null` | 指定顯示狀態資訊 (頁數/尺寸) 的 DOM ID。 |
+| `errorDisplayId` | String | `null` | 指定顯示錯誤或警告訊息的 DOM ID。 |
+| `buttons` | Object | `{}` | UI 按鈕綁定設定 (見下節)。 |
+
+### 按鈕綁定 (Button Binding)
+
+透過 `buttons` 物件將您的 HTML 按鈕 ID 與功能綁定：
+
+```javascript
+buttons: {
+    orientation: 'btn-rotate',   // 切換直/橫
+    addPage: 'btn-add',          // 增加頁數
+    removePage: 'btn-del',       // 減少頁數 (刪除末頁物件)
+    refreshImages: 'btn-reload', // 重新讀取圖片列表
+    save: 'btn-save',            // 觸發存檔 (需配合 onSave)
+    load: 'btn-load',            // 觸發讀檔 (需配合 onLoad)
+    settings: 'btn-config'       // (可選) 觸發設定彈窗
+}
+```
+
+---
+
+## 📡 API 資料規格
+
+### 1. 圖片列表 API (`GET /api/images`)
+
+後端需回傳以下 JSON 格式供側邊欄渲染：
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "img_id": "101",
+      "title": "sample.jpg",
+      "url": "https://example.com/img.jpg", 
+      "base64": "data:image/jpeg;base64,..." 
+    }
+  ]
+}
+```
+*   **img_id**: 圖片唯一識別碼 (必須)。
+*   **url/base64**: 擇一提供，若都有則優先使用 `url`。
+
+### 2. 存檔格式 (`Save`)
+
+呼叫 `save(extraParams)` 後產出的 JSON 結構：
+
+```json
+{
+  "version": "1.0",
+  "orientation": "portrait",
+  "pageCount": 2,
+  "dpi": 48,
+  "extraParams": { "user_id": "123" }, // 您傳入的額外參數
+  "canvasObjects": [
+    {
+      "type": "image",
+      "imageId": "101",
+      "left": 50, // 相對於所屬頁面的座標
+      "top": 50,
+      "angle": 90,
+      "scaleX": 0.5,
+      "scaleY": 0.5
+    }
+  ]
+}
+```
+
+### 3. 讀檔格式 (`Load`)
+
+`load(data)` 方法接受上述存檔格式的 JSON 物件。
+*   **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片，並回傳 `{ skipped: ['filename', ...] }` 供前端顯示警告。
+
+---
+
+## 🛠️ 開發與建置
+
+本專案使用 Vite 進行開發與打包。
+
+```bash
+# 啟動開發伺服器
+npm run dev
+
+# 打包 Library (輸出至 dist/)
+npm run build
+```

@@ -1,0 +1,20 @@
+{
+  "name": "fabric-a4-layout",
+  "version": "1.0.0",
+  "description": "A specialized, reusable JavaScript (ES6) class based on **Fabric.js v7.1.0** for simulating A4 pagination on a single HTML5 Canvas. It supports dynamic layout switching (Portrait/Horizontal Scroll vs. Landscape/Vertical Scroll), API integration for image assets, and custom control interactions.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "fabric": "^7.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "sass": "^1.83.4",
+    "vite": "^6.0.7"
+  }
+}
