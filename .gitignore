@@ -1,8 +1,21 @@
 # ---> Composer
 composer.phar
 /vendor/
+/node_modules/
 
-# Commit your application's lock file https://getcomposer.org/doc/01-basic-usage.md#commit-your-composer-lock-file-to-version-control
-# You may choose to ignore a library lock file http://getcomposer.org/doc/02-libraries.md#lock-file
-# composer.lock
+# 忽略產生的 Word 測試檔案
+*.docx
+*.doc
+
+# 忽略使用者上傳的圖片 (如果有這個資料夾)
+/uploads/
+/images/temp/
+
+# 忽略 IDE 設定檔 (如果你不想同步 VS Code 設定)
+.vscode/
+.idea/
+
+# 忽略作業系統縮圖
+Thumbs.db
+.DS_Store
 
