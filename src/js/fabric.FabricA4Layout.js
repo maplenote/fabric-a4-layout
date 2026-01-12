@@ -187,6 +187,7 @@ export class FabricA4Layout {
       orientation: 'portrait',
       saveWithBase64: false,
       uniqueImages: false,
+      defaultGrayscale: false,
       saveEndpoint: null,
       data: {},
       buttons: {}, // Map of action -> buttonId
@@ -350,7 +351,8 @@ export class FabricA4Layout {
                 <strong>${this.t.status.setting}</strong> ${this.t.status.dpi} ${this.config.dpi} | 
                 <strong>${this.t.status.pages}</strong> ${this.pageCount} | 
                 <strong>${this.t.status.orientation}</strong> ${dir} | 
-                <strong>${this.t.status.size}</strong> ${totalW} x ${totalH} px
+                <strong>${this.t.status.size}</strong> ${totalW} x ${totalH} px |
+                <strong>${this.t.status.grayscale}</strong> ${this.config.defaultGrayscale ? this.t.status.on : this.t.status.off}
             `;
           }
       }
@@ -433,24 +435,135 @@ export class FabricA4Layout {
     if (!imgData) return;
 
     const imgSrc = imgData.url || imgData.base64;
-
     const imgObj = await FabricImage.fromURL(imgSrc);
-    
+
+    // Default props
     imgObj.set({
       imageId: imgId,
-      left: 50,
-      top: 50,
       cornerSize: 10,
       transparentCorners: false,
       originX: 'left', 
       originY: 'top'
     });
 
+    // Apply DPI Correction based on ORIGINAL dimensions from API
+    // The Base64 image might be a thumbnail (e.g., 300px), but we want to render 
+    // the size as if it were the original image at the target DPI.
+    const BASE_DPI = 96;
+    const targetDpiScale = this.config.dpi / BASE_DPI; // e.g. 48/96 = 0.5
+    
+    // Calculate the scale factor to restore original physical size
+    // Scale = (Original / Base64) * DPI_Ratio
+    let finalScaleX = 1;
+    let finalScaleY = 1;
+
+    if (imgData.original_width && imgData.original_height && imgObj.width > 0 && imgObj.height > 0) {
+        finalScaleX = (imgData.original_width / imgObj.width) * targetDpiScale;
+        finalScaleY = (imgData.original_height / imgObj.height) * targetDpiScale;
+    } else {
+        // Fallback if original dimensions are missing
+        finalScaleX = targetDpiScale;
+        finalScaleY = targetDpiScale;
+    }
+
+    imgObj.scaleX = finalScaleX;
+    imgObj.scaleY = finalScaleY;
+    
+    // Apply Default Grayscale
+    if (this.config.defaultGrayscale) {
+        imgObj.filters.push(new filters.Grayscale());
+        imgObj.applyFilters();
+    }
+
     this.setupCustomControls(imgObj);
 
-    if (imgObj.width > 200) {
-      imgObj.scaleToWidth(200);
+    // 1. Determine Page Dimensions & Scale Logic
+    const isPortrait = this.orientation === 'portrait';
+    // Visual dimensions of one page
+    const pageVisualW = isPortrait ? this.pageWidthPx : this.pageHeightPx;
+    const pageVisualH = isPortrait ? this.pageHeightPx : this.pageWidthPx;
+
+    // Check against A4 page limits (Fit & Scale if too big)
+    // Now getScaledWidth/Height reflects the "Original Physical Size" at current DPI
+    if (imgObj.getScaledWidth() > pageVisualW || imgObj.getScaledHeight() > pageVisualH) {
+      // Scale to fit then reduce to 95% to avoid bleeding edges
+      const fitScale = Math.min(pageVisualW / imgObj.getScaledWidth(), pageVisualH / imgObj.getScaledHeight()) * 0.95;
+      
+      // Apply the fit scale on top of the restored scale
+      imgObj.scaleX *= fitScale;
+      imgObj.scaleY *= fitScale;
     }
+
+    // 2. Find Insertion Point (Flow Logic)
+    let targetPage = this.pageCount - 1;
+    
+    // Helper to find objects on a specific page index
+    const getObjectsOnPage = (pIdx) => {
+        const objs = this.canvas.getObjects().filter(o => !o.isBackground);
+        return objs.filter(o => {
+            const center = o.getCenterPoint();
+            if (isPortrait) {
+                const pStart = pIdx * (pageVisualW + this.gap);
+                const pEnd = pStart + pageVisualW;
+                return center.x >= pStart && center.x < pEnd;
+            } else {
+                const pStart = pIdx * (pageVisualH + this.gap);
+                const pEnd = pStart + pageVisualH;
+                return center.y >= pStart && center.y < pEnd;
+            }
+        });
+    };
+
+    const pageObjects = getObjectsOnPage(targetPage);
+    let startY = 0; // Relative Y on the page
+
+    // Define a safe top margin (2.5% of height, matching the 95% scale centering logic)
+    const topMargin = pageVisualH * 0.025;
+
+    if (pageObjects.length > 0) {
+        // Find the bottom-most point of existing objects
+        let maxBottom = 0;
+        pageObjects.forEach(o => {
+            // Calculate relative bottom
+            let objBottomRel = 0;
+            if (isPortrait) {
+                objBottomRel = o.top + o.getScaledHeight();
+            } else {
+                // In landscape, global Top includes page offsets
+                const pageOffset = targetPage * (pageVisualH + this.gap);
+                objBottomRel = (o.top - pageOffset) + o.getScaledHeight();
+            }
+            if (objBottomRel > maxBottom) maxBottom = objBottomRel;
+        });
+        startY = maxBottom + this.gap;
+    } else {
+        startY = topMargin;
+    }
+
+    // 3. Check Vertical Overflow
+    if (startY + imgObj.getScaledHeight() > pageVisualH) {
+        // Doesn't fit on current page -> New Page
+        this.addPage();
+        targetPage++;
+        startY = topMargin; // Reset to top for new page
+    }
+
+    // 4. Calculate Global Coordinates
+    let globalLeft, globalTop;
+
+    if (isPortrait) {
+        const pageOffset = targetPage * (pageVisualW + this.gap);
+        // Center horizontally
+        globalLeft = pageOffset + (pageVisualW - imgObj.getScaledWidth()) / 2;
+        globalTop = startY;
+    } else {
+        const pageOffset = targetPage * (pageVisualH + this.gap);
+        // Center horizontally (visual width)
+        globalLeft = (pageVisualW - imgObj.getScaledWidth()) / 2;
+        globalTop = pageOffset + startY;
+    }
+
+    imgObj.set({ left: globalLeft, top: globalTop });
 
     this.canvas.add(imgObj);
     this.canvas.setActiveObject(imgObj);

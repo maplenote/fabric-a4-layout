@@ -54,6 +54,10 @@
                         <input type="checkbox" id="inp-unique">
                         啟用圖片不重複限制
                     </label>
+                    <label style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
+                        <input type="checkbox" id="inp-grayscale">
+                        啟用預設灰階 (新增圖片自動轉灰階)
+                    </label>
                     <small style="color: #666; margin-top: 5px;">注意：套用設定將會<b>清空並重置</b>目前A4。</small>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -85,21 +89,6 @@
         window.layout = null;
         let lastSavedData = null;
 
-        function updateStatusDisplay(layout) {
-            const el = document.getElementById('status-display');
-            if (!layout || !layout.canvas) return;
-            
-            const totalW = layout.canvas.getWidth();
-            const totalH = layout.canvas.getHeight();
-            
-            el.innerHTML = `
-                <strong>設定:</strong> DPI ${layout.config.dpi} |
-                <strong>頁數:</strong> ${layout.pageCount} |
-                <strong>方向:</strong> ${layout.orientation === 'portrait' ? '直式' : '橫式'} |
-                <strong>A4尺寸:</strong> ${totalW} x ${totalH} px
-            `;
-        }
-
         // --- Layout Initialization Helper ---
         async function createLayout(config) {
             // Cleanup
@@ -121,13 +110,14 @@
             const layout = new FabricA4Layout(config);
             window.layout = layout;
             await layout.init();
-            updateStatusDisplay(layout);
         }
 
         // --- Main Entry ---
         async function init() {
             let currentConfig = {
                 canvasId: 'c',
+                statusDisplayId: 'status-display',
+                errorDisplayId: 'error-display',
                 orientation: 'portrait',
                 apiEndpoint: './api/images.json',
                 // saveEndpoint: '/api/save',
@@ -143,6 +133,7 @@
             const inpDpi = document.getElementById('inp-dpi');
             const inpPx = document.getElementById('inp-px');
             const inpUnique = document.getElementById('inp-unique');
+            const inpGrayscale = document.getElementById('inp-grayscale');
             const inpOrientation = document.getElementById('inp-orientation');
             const inpData = document.getElementById('inp-data');
             const mmShort = 210;
@@ -162,6 +153,7 @@
                 // Load current values
                 inpDpi.value = window.layout.config.dpi;
                 inpUnique.checked = window.layout.config.uniqueImages;
+                inpGrayscale.checked = window.layout.config.defaultGrayscale;
                 // Use current actual orientation
                 inpOrientation.value = window.layout.orientation || 'portrait';
                 // Load current data
@@ -174,6 +166,7 @@
             document.getElementById('btn-apply-settings').onclick = async () => {
                 const newDpi = parseInt(inpDpi.value) || 48;
                 const newUnique = inpUnique.checked;
+                const newGrayscale = inpGrayscale.checked;
                 const newOrientation = inpOrientation.value;
                 
                 let newData = {};
@@ -191,52 +184,45 @@
                     ...currentConfig,
                     dpi: newDpi,
                     uniqueImages: newUnique,
+                    defaultGrayscale: newGrayscale,
                     orientation: newOrientation,
                     data: newData
                 };
 
                 // Re-init
                 await createLayout(currentConfig);
-                alert(`A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${newUnique ? '開啟' : '關閉'}`);
+                alert(`A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${newUnique ? '開啟' : '關閉'}\n預設灰階: ${newGrayscale ? '開啟' : '關閉'}`);
             };
 
              // Bind Buttons
             document.getElementById('btn-orientation').onclick = () => {
                 window.layout.toggleOrientation();
-                updateStatusDisplay(window.layout);
             };
 
             document.getElementById('btn-add-page').onclick = () => {
                 window.layout.addPage();
-                updateStatusDisplay(window.layout);
             };
 
             document.getElementById('btn-remove-page').onclick = () => {
                 window.layout.removePage();
-                updateStatusDisplay(window.layout);
             };
             
-            document.getElementById('btn-refresh-images').onclick = () => {
-                 // Manual refresh trigger if needed, though class binds it too if ID passed.
-                 // But wait, the class bindControls uses 'buttons' config. 
-                 // We should probably rely on class binding OR manual binding.
-                 // In this file, I see manual bindings below. 
-                 // The class also binds if IDs match. 
-                 // Let's keep manual bindings for safety as they are explicit here.
+            document.getElementById('btn-refresh-images').onclick = async () => {
                  window.layout.cleanupOutOfBounds(); 
-                 window.layout.fetchImages().then(() => alert('圖片列表已更新'));
+                 await window.layout.fetchImages();
+                 window.layout.showError('圖片列表已更新，並已自動移除A4範圍外的圖片', true);
             };
 
             document.getElementById('btn-save').onclick = async () => {
                 if (window.layout.config.saveEndpoint) {
                     try {
                         const res = await window.layout.saveToBackend({ demo_user: 'user_123' });
-                        alert('佈局已成功儲存至伺服器！');
+                        window.layout.showError('佈局已成功儲存至伺服器！', true);
                         console.log('Server Response:', res);
                         return;
                     } catch (e) {
                         console.warn('Backend save failed (Demo mode?), falling back to console.', e);
-                        alert(`後端儲存失敗 (可能是 Demo 無真實 API): ${e.message}\n\n資料將顯示於 Console。`);
+                        window.layout.showError(`後端儲存失敗: ${e.message}`);
                     }
                 } else {
                     console.log('No saveEndpoint configured. Using Console mode.');
@@ -246,22 +232,21 @@
                 console.log('Saved Data (Console Mode):', data);
                 lastSavedData = data;
                 if (!window.layout.config.saveEndpoint) {
-                    alert('佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)。');
+                    window.layout.showError('佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)', true);
                 }
             };
 
             document.getElementById('btn-load').onclick = async () => {
                 if (lastSavedData) {
                     const result = await window.layout.load(lastSavedData);
-                    updateStatusDisplay(window.layout);
                     
                     if (result.skipped && result.skipped.length > 0) {
-                        alert(`佈局讀取成功！\n\n注意：根據「圖片不重複限制」，已自動移除 ${result.skipped.length} 張重複的圖片。\n(檔名: ${result.skipped.join(', ')})`);
+                        window.layout.showError(`佈局讀取成功！但已略過重複圖片: ${result.skipped.join(', ')}`);
                     } else {
-                        alert('佈局讀取成功！');
+                        window.layout.showError('佈局讀取成功！', true);
                     }
                 } else {
-                    alert('尚未儲存任何佈局！請先試著擺放圖片並儲存。');
+                    window.layout.showError('尚未儲存任何佈局！請先試著擺放圖片並儲存。');
                 }
             };
         }

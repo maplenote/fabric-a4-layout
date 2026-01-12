@@ -10,6 +10,7 @@ composer.phar
 # 忽略使用者上傳的圖片 (如果有這個資料夾)
 /uploads/
 /images/temp/
+/temp/
 
 # 忽略 IDE 設定檔 (如果你不想同步 VS Code 設定)
 .vscode/

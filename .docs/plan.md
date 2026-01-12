@@ -31,7 +31,7 @@ fabric-a4-layout/
     - `renderSidebar()` 負責側邊欄 DOM 操作與互動邏輯 (Click-to-Add/Remove)。
     - `updateStatusDisplay()` / `showError()` 負責資訊反饋 (支援 DOM ID 指定)。
 5.  **畫布操作區 (Canvas Ops)**:
-    -   `addImageToCanvas()`: 圖片實例化與自訂控制項注入。
+    -   `addImageToCanvas()`: 圖片實例化、自訂控制項注入、自動縮放(95% Fit)、自動流式排版(Flow Layout)與自動換頁。
     -   `setupLayout()`: 背景頁面繪製、Canvas 尺寸更新。
     -   `addPage()` / `removePage()`: 動態調整總頁數。
     -   `clearCanvas()` / `cleanupOutOfBounds()`: 清理畫布物件。
@@ -40,6 +40,7 @@ fabric-a4-layout/
     -   `enforceUniqueness()`: 移除重複物件。
 7.  **自訂控制項區 (Extensions)**:
     -   `setupCustomControls()`: 注入 Rotate 90 (TL), Delete (TR), Grayscale (BL) 按鈕。
+    -   **設定**: 支援 `defaultGrayscale` 組態，新增圖片自動套用灰階濾鏡。
     -   **優化**: 內縮定位、實心底色、游標反饋。
 8.  **持久化區 (Persistence)**: `save()` 與 `load()`。
 9.  **銷毀區 (Cleanup)**: `destroy()` 釋放資源。

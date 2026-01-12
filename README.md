@@ -2,6 +2,11 @@
 
 一個基於 **Fabric.js v7** 的模組化 A4 排版引擎。支援單一畫布模擬多頁排版、直/橫向切換、圖片拖曳、不重複檢查以及完整的存取功能。
 
+**新增功能 (v1.1):**
+*   **自動縮放 (Auto Scale)**: 插入圖片時若超過 A4 尺寸，自動縮小至 95% 頁面大小 (預留出血邊)，未超過則維持原大。
+*   **流式排版 (Flow Layout)**: 自動偵測上一張圖片位置往下排列；若空間不足，自動新增頁面並排至新頁頂端。
+*   **預設灰階 (Default Grayscale)**: 可設定新圖片預設為黑白模式。
+
 ## 🚀 快速開始 (Quick Start)
 
 ### 1. 引入檔案 (Manual Include)
@@ -93,6 +98,7 @@ await layout.init();
 | `dpi` | Number | `48` | 版面解析度，影響像素換算 (範圍 24-192)。 |
 | `orientation` | String | `'portrait'` | 初始方向 `'portrait'` (直) 或 `'landscape'` (橫)。 |
 | `uniqueImages` | Boolean | `false` | 若為 `true`，同一張圖片僅能被加入畫布一次。 |
+| `defaultGrayscale` | Boolean | `false` | 若為 `true`，新加入的圖片自動套用灰階濾鏡。 |
 | `saveWithBase64`| Boolean | `false` | 存檔時是否保留圖片的 Base64 資料 (建議 false 以減少傳輸量)。 |
 | `data` | Object | `{}` | (選填) 自訂初始化資料，將隨存檔一起送出。 |
 | `statusDisplayId`| String | `null` | 指定顯示狀態資訊 (頁數/尺寸) 的 DOM ID。 |

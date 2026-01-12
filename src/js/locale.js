@@ -6,7 +6,10 @@ export const defaultLocale = {
         orientation: "方向:",
         portrait: "直式",
         landscape: "橫式",
-        size: "A4尺寸:"
+        size: "A4尺寸:",
+        grayscale: "灰階預設:",
+        on: "開啟",
+        off: "關閉"
     },
     error: {
         fetchFailed: "API 讀取失敗",

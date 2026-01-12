@@ -10,11 +10,14 @@
 - [x] 實作 `init()` 與 Canvas 實例化 (禁用 Retina Scaling)
 - [x] 實作 `setupLayout()`: 支援白色背景頁面與邊框
 - [x] 實作 `addPage()` 與 `removePage()` (含物件清理)
+- [x] **Feature**: 實作自動流式排版 (偵測位置、自動換頁、水平置中)
 
 ## Phase 3: 圖片管理 (Image Manager)
 - [x] 實作 `fetchImages()`: 支援 `API_SPEC.md` JSON 格式
 - [x] 實作 `renderSidebar()`: 圖片預覽、點擊加入/移除
 - [x] 實作 `addImageToCanvas()`: 固定 `left/top` 基準點
+- [x] **Feature**: 實作圖片自動縮放 (超過A4縮至95% Fit)
+- [x] **Feature**: 實作預設灰階功能 (Default Grayscale)
 - [x] **Update**: 實作更新圖片列表與自動清理畫布外物件
 
 ## Phase 4: 自訂控制項 (Advanced Controls)
