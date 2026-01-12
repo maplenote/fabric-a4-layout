@@ -137,7 +137,9 @@ buttons: {
       "img_id": "101",
       "title": "sample.jpg",
       "url": "https://example.com/img.jpg", 
-      "base64": "data:image/jpeg;base64,..." 
+      "base64": "data:image/jpeg;base64,...",
+      "original_width": 1200,
+      "original_height": 800
     }
   ]
 }
@@ -145,52 +147,53 @@ buttons: {
 
 * **img_id**: 圖片唯一識別碼 (必須)。
 * **url/base64**: 擇一提供，若都有則優先使用 `url`。
+* **original_width/height**: **原始圖片像素寬高 (必須)**。系統將以此作為 DPI 換算的基準（預設為 96 DPI）。
 
-### 2. 存檔格式 (`Save`)
+### 2. 存檔格式 (`Save Layout`)
 
-呼叫 `save(extraParams)` 後產出的 JSON 結構：
+呼叫 `save(extraParams)` 後產出的 JSON 結構符合 `API_SPEC.md` 規範：
 
 ```json
 {
-  "version": "1.0",
-  "orientation": "portrait",
-  "pageCount": 2,
-  "dpi": 48,
-  "data": { "page_pk": "123", "user_id": "456" }, // config.data + extraParams 的聯集
-  "canvasObjects": [
+  "data": { 
+    "page_pk": "123", 
+    "user_note": "急件" 
+  },
+  "page": {
+    "orientation": "P",
+    "dpi": 48,
+    "width": 397,
+    "height": 561,
+    "pages": 1
+  },
+  "items": [
     {
-      "type": "image",
-      "imageId": "101",
-      "left": 50, // 相對於所屬頁面的座標
-      "top": 50,
-      "angle": 90,
-      "scaleX": 0.5,
-      "scaleY": 0.5
+      "seq_no": 1,
+      "img_id": 101,
+      "page_num": 1,
+      "img_setting": {
+        "is_grayscale": false,
+        "now_width": 100,
+        "now_height": 80,
+        "left": 10.5,
+        "top": 20.0,
+        "angle": 0,
+        "scaleX": 0.2,
+        "scaleY": 0.2,
+        "width": 500,
+        "height": 400
+      }
     }
   ]
 }
 ```
 
-### 3. 讀檔格式 (`Load`)
+### 3. 讀檔格式 (`Load Layout`)
 
 `load(data)` 方法接受上述存檔格式的 JSON 物件。
 
-* **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片，並回傳 `{ skipped: ['filename', ...] }` 供前端顯示警告。
-
-### 4. 儲存至後端 (`saveToBackend`)
-
-若初始化時有設定 `saveEndpoint`，可呼叫此非同步方法直接執行 AJAX POST 儲存：
-
-```javascript
-try {
-    const response = await layout.saveToBackend({ timestamp: Date.now() });
-    console.log('儲存成功:', response);
-} catch (err) {
-    console.error('儲存失敗:', err);
-}
-```
-
-此方法會將 `save()` 的產出作為 Body (JSON) 發送至指定的 URL。
+* **來源匹配**: 系統會根據 `img_id` 自動從現有的圖片列表中匹配 `url` 或 `base64`。
+* **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片。
 
 ---
 
