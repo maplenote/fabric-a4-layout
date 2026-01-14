@@ -6,7 +6,6 @@
     <title>Fabric.js A4 排版系統範例 (Demo)</title>
 
     <!-- 1. 引入 Fabric.js CDN (Demo 網頁必須，因為 Library Build 設定為 external) -->
-    <script src="https://cdn.jsdelivr.net/npm/fabric@7.1.0/dist/layout-text.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fabric@7.1.0/dist/index.min.js"></script>
 
     <!-- 2. 引入 Build 後的 CSS -->
@@ -182,8 +181,23 @@
 
     <!-- Script -->
     <script type="module">
-      import { FabricA4Layout } from "./dist/fabric.FabricA4Layout.es.js";
-      // import "./src/scss/fabric.FabricA4Layout.scss";
+      // 由於 UMD build (min.js) 不支援 ES Module 的 named export，
+      // 且 ES build (js) 會嘗試尋找 'fabric' module (但在瀏覽器環境中沒有 module resolution)，
+      // 這裡最簡單的方法是：
+      // 1. 使用 UMD 版本 (.min.js)，它會將 FabricA4Layout 掛載到 window 全域物件上。
+      // 2. 因此不需要 import { ... } from ...，直接使用 window.FabricA4Layout。
+
+      // import { FabricA4Layout } from "./dist/fabric.FabricA4Layout.min.js"; // 這行移除
+    </script>
+
+    <!-- 載入 UMD 版本 (非 module 方式，確保全域變數生效) -->
+    <script src="./dist/fabric.FabricA4Layout.min.js"></script>
+
+    <script type="module">
+      // 因為我們使用 UMD script tag 載入，FabricA4Layout 已全域可用
+      // FabricA4Layout 是一個物件，裡面包含了 FabricA4Layout Class
+      const FabricA4Layout =
+        window.FabricA4Layout.FabricA4Layout || window.FabricA4Layout;
 
       // Global reference
       window.layout = null;
