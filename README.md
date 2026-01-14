@@ -2,6 +2,8 @@
 
 一個基於 **Fabric.js v7** 的模組化 A4 排版引擎。支援單一畫布模擬多頁排版、直/橫向切換、圖片拖曳、不重複檢查以及完整的存取功能。
 
+🔴 **線上展示 (Live Demo)**: [https://maplenote.github.io/fabric-a4-layout/](https://maplenote.github.io/fabric-a4-layout/)
+
 **新增功能 (v1.1):**
 
 * **自動縮放 (Auto Scale)**: 插入圖片時若超過 A4 尺寸，自動縮小至 95% 頁面大小 (預留出血邊)，未超過則維持原大。
@@ -10,11 +12,34 @@
 
 ## 🚀 快速開始 (Quick Start)
 
-### 1. 引入檔案 (Manual Include)
+### 1. 安裝與引入
 
-本專案為私人專案，請直接將 `dist/` 資料夾內的檔案複製到您的專案中。
+#### 方法 A：使用 npm (推薦)
 
-由於本工具依賴 **Fabric.js v7**，請務必在使用前引入 Fabric.js。
+**注意：** 透過 npm 安裝時，`fabric` 套件會作為依賴一併被安裝，因此通常**不需要**再手動引入 Fabric.js 的 CDN。
+
+直接從 GitHub 存儲庫安裝：
+
+```bash
+npm install github:maplenote/fabric-a4-layout
+# 或
+npm install maplenote/fabric-a4-layout
+```
+
+在您的專案中引入 (ES Module)：
+
+```javascript
+import { FabricA4Layout } from 'fabric-a4-layout';
+import 'fabric-a4-layout/css'; // 引入樣式
+
+// 初始化...
+```
+
+#### 方法 B：手動複製檔案 (Manual)
+
+若不使用 npm，可直接將本專案 `dist/` 資料夾內的檔案複製到您的專案中。
+
+**注意：** 本工具依賴 **Fabric.js v7**，請務必在使用前引入 Fabric.js。
 
 ```html
 <!-- 1. 引入 Fabric.js v7 (必須) -->
@@ -25,18 +50,19 @@
 
 <!-- 3. 引入本工具 (ES Module 方式) -->
 <script type="module">
-  import { FabricA4Layout } from './dist/js/fabric.FabricA4Layout.min.js';
+  import { FabricA4Layout } from './dist/fabric.FabricA4Layout.js';
   
   // 初始化...
 </script>
 ```
 
-或者使用 UMD 方式 (若非 Module 環境):
+#### 方法 C：UMD 引入 (無 Module 環境)
 
 ```html
-<script src="dist/js/fabric.FabricA4Layout.min.js"></script>
+<script src="dist/fabric.FabricA4Layout.min.js"></script>
 <script>
-  // FabricA4Layout 會掛載在 window 下 (視 Vite 設定而定，建議使用 ES Module)
+  // FabricA4Layout 會掛載在 window 下
+  const layout = new window.FabricA4Layout({ ... });
 </script>
 ```
 
