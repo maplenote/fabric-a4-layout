@@ -1,257 +1,381 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fabric.js A4 排版系統範例</title>
     <!-- In development, we use the source SCSS (Vite handles it) -->
     <!-- In production, this would be <link rel="stylesheet" href="dist/css/fabric.FabricA4Layout.min.css"> -->
-</head>
-<body>
+  </head>
+  <body>
     <div id="app">
-        <div style="padding: 10px; background: #eee; border-bottom: 1px solid #ccc; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <strong>功能控制:</strong>
-            <button id="btn-orientation">切換版面方向 (直/橫)</button>
-            <button id="btn-add-page">增加頁數</button>
-            <button id="btn-remove-page">減少頁數</button>
-            <button id="btn-refresh-images">🔄 更新圖片</button>
-            <button id="btn-settings">⚙️ A4設定</button>
-            <button id="btn-save">儲存佈局 (看 Console)</button>
-            <button id="btn-load">讀取佈局</button>
-            
-            <span id="status-display" style="margin-left: auto; font-size: 14px; color: #555; background: #fff; padding: 2px 8px; border-radius: 4px; border: 1px solid #ddd;">
-                載入中...
-            </span>
-        </div>
-        
-        <!-- Error Display Container -->
-        <div id="error-display" style="display: none; background: #ffebee; color: #c62828; padding: 10px; border-bottom: 1px solid #ef9a9a; font-size: 14px;"></div>
+      <div
+        style="
+          padding: 10px;
+          background: #eee;
+          border-bottom: 1px solid #ccc;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+        "
+      >
+        <strong>功能控制:</strong>
+        <button id="btn-orientation">切換版面方向 (直/橫)</button>
+        <button id="btn-add-page">增加頁數</button>
+        <button id="btn-remove-page">減少頁數</button>
+        <button id="btn-refresh-images">🔄 更新圖片</button>
+        <button id="btn-settings">⚙️ A4設定</button>
+        <button id="btn-save">儲存佈局 (看 Console)</button>
+        <button id="btn-load">讀取佈局</button>
 
-        <dialog id="settings-dialog" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            <form method="dialog">
-                <h3 style="margin-top: 0;">A4初始設定</h3>
-                <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
-                    <label>
-                        DPI 設定:
-                        <input type="number" id="inp-dpi" value="48" min="24" max="192" style="width: 80px;">
-                    </label>
-                    <label>
-                        A4 短邊像素 (px):
-                        <input type="number" id="inp-px" value="397" style="width: 80px;">
-                    </label>
-                    <label>
-                        預設方向:
-                        <select id="inp-orientation" style="padding: 2px;">
-                            <option value="portrait">直式 (Portrait)</option>
-                            <option value="landscape">橫式 (Landscape)</option>
-                        </select>
-                    </label>
-                    <label style="display: flex; flex-direction: column; gap: 5px;">
-                        自訂 Data (JSON):
-                        <textarea id="inp-data" rows="3" style="width: 100%; font-family: monospace; font-size: 12px; padding: 5px;" placeholder='{"key": "value"}'></textarea>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                        <input type="checkbox" id="inp-unique">
-                        啟用圖片不重複限制
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">
-                        <input type="checkbox" id="inp-grayscale">
-                        啟用預設灰階 (新增圖片自動轉灰階)
-                    </label>
-                    <small style="color: #666; margin-top: 5px;">注意：套用設定將會<b>清空並重置</b>目前A4。</small>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" id="btn-cancel-settings">取消</button>
-                    <button type="button" id="btn-apply-settings" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">套用並重置</button>
-                </div>
-            </form>
-        </dialog>
+        <span
+          id="status-display"
+          style="
+            margin-left: auto;
+            font-size: 14px;
+            color: #555;
+            background: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+          "
+        >
+          載入中...
+        </span>
+      </div>
 
-        <div class="layout-container">
-            <!-- Sidebar -->
-            <div id="image-sidebar" class="sidebar">
-                載入圖片中...
-            </div>
-            
-            <!-- Canvas -->
-            <div class="canvas-wrapper">
-                <canvas id="c"></canvas>
-            </div>
+      <!-- Error Display Container -->
+      <div
+        id="error-display"
+        style="
+          display: none;
+          background: #ffebee;
+          color: #c62828;
+          padding: 10px;
+          border-bottom: 1px solid #ef9a9a;
+          font-size: 14px;
+        "
+      ></div>
+
+      <dialog
+        id="settings-dialog"
+        style="
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          padding: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        "
+      >
+        <form method="dialog">
+          <h3 style="margin-top: 0">A4初始設定</h3>
+          <div
+            style="
+              margin-bottom: 15px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            "
+          >
+            <label>
+              DPI 設定:
+              <input
+                type="number"
+                id="inp-dpi"
+                value="48"
+                min="24"
+                max="192"
+                style="width: 80px"
+              />
+            </label>
+            <label>
+              A4 短邊像素 (px):
+              <input
+                type="number"
+                id="inp-px"
+                value="397"
+                style="width: 80px"
+              />
+            </label>
+            <label>
+              預設方向:
+              <select id="inp-orientation" style="padding: 2px">
+                <option value="portrait">直式 (Portrait)</option>
+                <option value="landscape">橫式 (Landscape)</option>
+              </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 5px">
+              自訂 Data (JSON):
+              <textarea
+                id="inp-data"
+                rows="3"
+                style="
+                  width: 100%;
+                  font-family: monospace;
+                  font-size: 12px;
+                  padding: 5px;
+                "
+                placeholder='{"key": "value"}'
+              ></textarea>
+            </label>
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                margin-top: 5px;
+              "
+            >
+              <input type="checkbox" id="inp-unique" />
+              啟用圖片不重複限制
+            </label>
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                margin-top: 5px;
+              "
+            >
+              <input type="checkbox" id="inp-grayscale" />
+              啟用預設灰階 (新增圖片自動轉灰階)
+            </label>
+            <small style="color: #666; margin-top: 5px"
+              >注意：套用設定將會<b>清空並重置</b>目前A4。</small
+            >
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end">
+            <button type="button" id="btn-cancel-settings">取消</button>
+            <button
+              type="button"
+              id="btn-apply-settings"
+              style="
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+              "
+            >
+              套用並重置
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <div class="layout-container">
+        <!-- Sidebar -->
+        <div id="image-sidebar" class="sidebar">載入圖片中...</div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+          <canvas id="c"></canvas>
         </div>
+      </div>
     </div>
 
     <!-- Script -->
     <script type="module">
-        import { FabricA4Layout } from './src/js/fabric.FabricA4Layout.js';
-        import './src/scss/fabric.FabricA4Layout.scss';
+      import { FabricA4Layout } from "./src/js/fabric.FabricA4Layout.js";
+      import "./src/scss/fabric.FabricA4Layout.scss";
 
-        // Global reference
-        window.layout = null;
-        let lastSavedData = null;
+      // Global reference
+      window.layout = null;
+      let lastSavedData = null;
 
-        // --- Layout Initialization Helper ---
-        async function createLayout(config) {
-            // Cleanup
-            if (window.layout) {
-                window.layout.destroy();
-                window.layout = null;
-            }
-
-            // Ensure Canvas
-            let c = document.getElementById(config.canvasId);
-            if (!c) {
-                const wrapper = document.querySelector('.canvas-wrapper');
-                c = document.createElement('canvas');
-                c.id = config.canvasId;
-                wrapper.appendChild(c);
-            }
-
-            // Init
-            const layout = new FabricA4Layout(config);
-            window.layout = layout;
-            await layout.init();
+      // --- Layout Initialization Helper ---
+      async function createLayout(config) {
+        // Cleanup
+        if (window.layout) {
+          window.layout.destroy();
+          window.layout = null;
         }
 
-        // --- Main Entry ---
-        async function init() {
-            let currentConfig = {
-                canvasId: 'c',
-                statusDisplayId: 'status-display',
-                errorDisplayId: 'error-display',
-                orientation: 'portrait',
-                apiEndpoint: './api/images.json',
-                // saveEndpoint: '/api/save',
-                uniqueImages: false,
-                dpi: 48,
-                data: { "page_pk": "123", "user_note": "Demo Note" }
-            };
-
-            await createLayout(currentConfig);
-
-            // Settings Logic
-            const dialog = document.getElementById('settings-dialog');
-            const inpDpi = document.getElementById('inp-dpi');
-            const inpPx = document.getElementById('inp-px');
-            const inpUnique = document.getElementById('inp-unique');
-            const inpGrayscale = document.getElementById('inp-grayscale');
-            const inpOrientation = document.getElementById('inp-orientation');
-            const inpData = document.getElementById('inp-data');
-            const mmShort = 210;
-
-            inpDpi.oninput = () => {
-                const dpi = parseInt(inpDpi.value) || 0;
-                if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
-            };
-            inpPx.oninput = () => {
-                const px = parseInt(inpPx.value) || 0;
-                if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
-            };
-
-            document.getElementById('btn-cancel-settings').onclick = () => dialog.close();
-
-            document.getElementById('btn-settings').onclick = () => {
-                // Load current values
-                inpDpi.value = window.layout.config.dpi;
-                inpUnique.checked = window.layout.config.uniqueImages;
-                inpGrayscale.checked = window.layout.config.defaultGrayscale;
-                // Use current actual orientation
-                inpOrientation.value = window.layout.orientation || 'portrait';
-                // Load current data
-                inpData.value = JSON.stringify(window.layout.config.data || {}, null, 2);
-                
-                inpDpi.dispatchEvent(new Event('input')); // trigger sync
-                dialog.showModal();
-            };
-
-            document.getElementById('btn-apply-settings').onclick = async () => {
-                const newDpi = parseInt(inpDpi.value) || 48;
-                const newUnique = inpUnique.checked;
-                const newGrayscale = inpGrayscale.checked;
-                const newOrientation = inpOrientation.value;
-                
-                let newData = {};
-                try {
-                    newData = JSON.parse(inpData.value || '{}');
-                } catch (e) {
-                    alert('JSON 格式錯誤，請檢查自訂 Data 內容！');
-                    return;
-                }
-
-                dialog.close();
-                
-                // Update Config
-                currentConfig = {
-                    ...currentConfig,
-                    dpi: newDpi,
-                    uniqueImages: newUnique,
-                    defaultGrayscale: newGrayscale,
-                    orientation: newOrientation,
-                    data: newData
-                };
-
-                // Re-init
-                await createLayout(currentConfig);
-                alert(`A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${newUnique ? '開啟' : '關閉'}\n預設灰階: ${newGrayscale ? '開啟' : '關閉'}`);
-            };
-
-             // Bind Buttons
-            document.getElementById('btn-orientation').onclick = () => {
-                window.layout.toggleOrientation();
-            };
-
-            document.getElementById('btn-add-page').onclick = () => {
-                window.layout.addPage();
-            };
-
-            document.getElementById('btn-remove-page').onclick = () => {
-                window.layout.removePage();
-            };
-            
-            document.getElementById('btn-refresh-images').onclick = async () => {
-                 window.layout.cleanupOutOfBounds(); 
-                 await window.layout.fetchImages();
-                 window.layout.showError('圖片列表已更新，並已自動移除A4範圍外的圖片', true);
-            };
-
-            document.getElementById('btn-save').onclick = async () => {
-                if (window.layout.config.saveEndpoint) {
-                    try {
-                        const res = await window.layout.saveToBackend({ demo_user: 'user_123' });
-                        window.layout.showError('佈局已成功儲存至伺服器！', true);
-                        console.log('Server Response:', res);
-                        return;
-                    } catch (e) {
-                        console.warn('Backend save failed (Demo mode?), falling back to console.', e);
-                        window.layout.showError(`後端儲存失敗: ${e.message}`);
-                    }
-                } else {
-                    console.log('No saveEndpoint configured. Using Console mode.');
-                }
-
-                const data = window.layout.save({ demo_user: 'user_123' });
-                console.log('Saved Data (Console Mode):', data);
-                lastSavedData = data;
-                if (!window.layout.config.saveEndpoint) {
-                    window.layout.showError('佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)', true);
-                }
-            };
-
-            document.getElementById('btn-load').onclick = async () => {
-                if (lastSavedData) {
-                    const result = await window.layout.load(lastSavedData);
-                    
-                    if (result.skipped && result.skipped.length > 0) {
-                        window.layout.showError(`佈局讀取成功！但已略過重複圖片: ${result.skipped.join(', ')}`);
-                    } else {
-                        window.layout.showError('佈局讀取成功！', true);
-                    }
-                } else {
-                    window.layout.showError('尚未儲存任何佈局！請先試著擺放圖片並儲存。');
-                }
-            };
+        // Ensure Canvas
+        let c = document.getElementById(config.canvasId);
+        if (!c) {
+          const wrapper = document.querySelector(".canvas-wrapper");
+          c = document.createElement("canvas");
+          c.id = config.canvasId;
+          wrapper.appendChild(c);
         }
 
-        init();
+        // Init
+        const layout = new FabricA4Layout(config);
+        window.layout = layout;
+        await layout.init();
+      }
+
+      // --- Main Entry ---
+      async function init() {
+        let currentConfig = {
+          canvasId: "c",
+          statusDisplayId: "status-display",
+          errorDisplayId: "error-display",
+          orientation: "portrait",
+          apiEndpoint: "./api/images.json",
+          // saveEndpoint: '/api/save',
+          uniqueImages: false,
+          dpi: 48,
+          data: { page_pk: "123", user_note: "Demo Note" },
+        };
+
+        await createLayout(currentConfig);
+
+        // Settings Logic
+        const dialog = document.getElementById("settings-dialog");
+        const inpDpi = document.getElementById("inp-dpi");
+        const inpPx = document.getElementById("inp-px");
+        const inpUnique = document.getElementById("inp-unique");
+        const inpGrayscale = document.getElementById("inp-grayscale");
+        const inpOrientation = document.getElementById("inp-orientation");
+        const inpData = document.getElementById("inp-data");
+        const mmShort = 210;
+
+        inpDpi.oninput = () => {
+          const dpi = parseInt(inpDpi.value) || 0;
+          if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
+        };
+        inpPx.oninput = () => {
+          const px = parseInt(inpPx.value) || 0;
+          if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
+        };
+
+        document.getElementById("btn-cancel-settings").onclick = () =>
+          dialog.close();
+
+        document.getElementById("btn-settings").onclick = () => {
+          // Load current values
+          inpDpi.value = window.layout.config.dpi;
+          inpUnique.checked = window.layout.config.uniqueImages;
+          inpGrayscale.checked = window.layout.config.defaultGrayscale;
+          // Use current actual orientation
+          inpOrientation.value = window.layout.orientation || "portrait";
+          // Load current data
+          inpData.value = JSON.stringify(
+            window.layout.config.data || {},
+            null,
+            2
+          );
+
+          inpDpi.dispatchEvent(new Event("input")); // trigger sync
+          dialog.showModal();
+        };
+
+        document.getElementById("btn-apply-settings").onclick = async () => {
+          const newDpi = parseInt(inpDpi.value) || 48;
+          const newUnique = inpUnique.checked;
+          const newGrayscale = inpGrayscale.checked;
+          const newOrientation = inpOrientation.value;
+
+          let newData = {};
+          try {
+            newData = JSON.parse(inpData.value || "{}");
+          } catch (e) {
+            alert("JSON 格式錯誤，請檢查自訂 Data 內容！");
+            return;
+          }
+
+          dialog.close();
+
+          // Update Config
+          currentConfig = {
+            ...currentConfig,
+            dpi: newDpi,
+            uniqueImages: newUnique,
+            defaultGrayscale: newGrayscale,
+            orientation: newOrientation,
+            data: newData,
+          };
+
+          // Re-init
+          await createLayout(currentConfig);
+          alert(
+            `A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${
+              newUnique ? "開啟" : "關閉"
+            }\n預設灰階: ${newGrayscale ? "開啟" : "關閉"}`
+          );
+        };
+
+        // Bind Buttons
+        document.getElementById("btn-orientation").onclick = () => {
+          window.layout.toggleOrientation();
+        };
+
+        document.getElementById("btn-add-page").onclick = () => {
+          window.layout.addPage();
+        };
+
+        document.getElementById("btn-remove-page").onclick = () => {
+          window.layout.removePage();
+        };
+
+        document.getElementById("btn-refresh-images").onclick = async () => {
+          window.layout.cleanupOutOfBounds();
+          await window.layout.fetchImages();
+          window.layout.showError(
+            "圖片列表已更新，並已自動移除A4範圍外的圖片",
+            true
+          );
+        };
+
+        document.getElementById("btn-save").onclick = async () => {
+          if (window.layout.config.saveEndpoint) {
+            try {
+              const res = await window.layout.saveToBackend({
+                demo_user: "user_123",
+              });
+              window.layout.showError("佈局已成功儲存至伺服器！", true);
+              console.log("Server Response:", res);
+              return;
+            } catch (e) {
+              console.warn(
+                "Backend save failed (Demo mode?), falling back to console.",
+                e
+              );
+              window.layout.showError(`後端儲存失敗: ${e.message}`);
+            }
+          } else {
+            console.log("No saveEndpoint configured. Using Console mode.");
+          }
+
+          const data = window.layout.save({ demo_user: "user_123" });
+          console.log("Saved Data (Console Mode):", data);
+          lastSavedData = data;
+          if (!window.layout.config.saveEndpoint) {
+            window.layout.showError(
+              "佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)",
+              true
+            );
+          }
+        };
+
+        document.getElementById("btn-load").onclick = async () => {
+          if (lastSavedData) {
+            const result = await window.layout.load(lastSavedData);
+
+            if (result.success === false) {
+              window.layout.showError(`讀取失敗: ${result.message}`);
+              return;
+            }
+
+            if (result.skipped && result.skipped.length > 0) {
+              window.layout.showError(
+                `佈局讀取成功！但已略過重複圖片: ${result.skipped.join(", ")}`
+              );
+            } else {
+              window.layout.showError("佈局讀取成功！", true);
+            }
+          } else {
+            window.layout.showError(
+              "尚未儲存任何佈局！請先試著擺放圖片並儲存。"
+            );
+          }
+        };
+      }
+
+      init();
     </script>
-</body>
+  </body>
 </html>

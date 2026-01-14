@@ -139,7 +139,8 @@
 
 ```json
 {
-  "status": "success",
+  "succ": true,
+  "error": "",
   "data": [
     {
       "img_id": 101,
@@ -165,12 +166,15 @@
 
 | 欄位 | 類型 | 說明 |
 | :--- | :--- | :--- |
-| `img_id` | Number/String | **圖片唯一識別碼**。<br>若後端未回傳此欄位，前端將使用 MD5(url) 作為 Fallback ID。 |
-| `title` | String | **圖片標題**。 |
-| `base64` | String | **Base64 編碼字串**。<br>長邊 Max 500px。與 `url` 擇一提供。 |
-| `url` | String | **圖片 URL**。<br>與 `base64` 擇一提供。若使用 URL，需設定 `crossOrigin: 'anonymous'`。 |
-| `original_width` | Number | **原始寬度 (px)**。 |
-| `original_height` | Number | **原始高度 (px)**。 |
+| `succ` | Boolean | **成功標記**。<br>`true`: 成功; `false`: 失敗。 |
+| `error` | String | **錯誤訊息**。<br>若 `succ` 為 `false`，此欄位回傳錯誤原因。 |
+| `data` | Array | **圖片列表資料**。 |
+| `data[].img_id` | Number/String | **圖片唯一識別碼**。<br>若後端未回傳此欄位，前端將使用 MD5(url) 作為 Fallback ID。 |
+| `data[].title` | String | **圖片標題**。 |
+| `data[].base64` | String | **Base64 編碼字串**。<br>長邊 Max 500px。與 `url` 擇一提供。 |
+| `data[].url` | String | **圖片 URL**。<br>與 `base64` 擇一提供。若使用 URL，需設定 `crossOrigin: 'anonymous'`。 |
+| `data[].original_width` | Number | **原始寬度 (px)**。 |
+| `data[].original_height` | Number | **原始高度 (px)**。 |
 
 ## 4. 讀取排版介面 (Load Layout)
 
@@ -181,44 +185,48 @@
 
 ### 4.1 JSON Response 結構
 
-此結構與 **1. 存檔介面 (Save Layout)** 的 Payload 完全一致。
+此結構包含標準回應標頭，`data` 欄位內容與 **1. 存檔介面 (Save Layout)** 的 Payload 一致。
 
 ```json
 {
+  "succ": true,
+  "error": "",
   "data": {
-    "page_pk": "123",
-    "user_note": "急件"
-  },
-  "page": {
-    "orientation": "L",
-    "dpi": 48,
-    "width": 397,
-    "height": 561,
-    "pages": 2
-  },
-  "items": [
-    {
-      "seq_no": 1,
-      "img_id": 101,
-      "page_num": 1,
-      "img_setting": {
-        "is_grayscale": false,
-        "now_width": 100,
-        "now_height": 80,
-        "z-index": 0,
-        "type": "image",
-        "left": 10.5,
-        "top": 20.0,
-        "angle": 0,
-        "scaleX": 0.2,
-        "scaleY": 0.2,
-        "width": 500,
-        "height": 400,
-        "originX": "left",
-        "originY": "top"
-      }
-    }
-  ]
+    "data": {
+        "page_pk": "123",
+        "user_note": "急件"
+    },
+    "page": {
+        "orientation": "L",
+        "dpi": 48,
+        "width": 397,
+        "height": 561,
+        "pages": 2
+    },
+    "items": [
+        {
+        "seq_no": 1,
+        "img_id": 101,
+        "page_num": 1,
+        "img_setting": {
+            "is_grayscale": false,
+            "now_width": 100,
+            "now_height": 80,
+            "z-index": 0,
+            "type": "image",
+            "left": 10.5,
+            "top": 20.0,
+            "angle": 0,
+            "scaleX": 0.2,
+            "scaleY": 0.2,
+            "width": 500,
+            "height": 400,
+            "originX": "left",
+            "originY": "top"
+        }
+        }
+    ]
+  }
 }
 ```
 
