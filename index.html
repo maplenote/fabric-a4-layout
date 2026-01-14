@@ -3,9 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fabric.js A4 排版系統範例</title>
-    <!-- In development, we use the source SCSS (Vite handles it) -->
-    <!-- In production, this would be <link rel="stylesheet" href="dist/css/fabric.FabricA4Layout.min.css"> -->
+    <title>Fabric.js A4 排版系統範例 (Demo)</title>
+
+    <!-- 1. 引入 Fabric.js CDN (Demo 網頁必須，因為 Library Build 設定為 external) -->
+    <script src="https://cdn.jsdelivr.net/npm/fabric@7.1.0/dist/layout-text.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@7.1.0/dist/index.min.js"></script>
+
+    <!-- 2. 引入 Build 後的 CSS -->
+    <link rel="stylesheet" href="./dist/css/fabric.FabricA4Layout.min.css" />
   </head>
   <body>
     <div id="app">
@@ -20,7 +25,7 @@
           flex-wrap: wrap;
         "
       >
-        <strong>功能控制:</strong>
+        <strong>功能控制 (Demo):</strong>
         <button id="btn-orientation">切換版面方向 (直/橫)</button>
         <button id="btn-add-page">增加頁數</button>
         <button id="btn-remove-page">減少頁數</button>
@@ -177,8 +182,8 @@
 
     <!-- Script -->
     <script type="module">
-      import { FabricA4Layout } from "./src/js/fabric.FabricA4Layout.js";
-      import "./src/scss/fabric.FabricA4Layout.scss";
+      import { FabricA4Layout } from "./dist/fabric.FabricA4Layout.es.js";
+      // import "./src/scss/fabric.FabricA4Layout.scss";
 
       // Global reference
       window.layout = null;
@@ -214,7 +219,7 @@
           statusDisplayId: "status-display",
           errorDisplayId: "error-display",
           orientation: "portrait",
-          apiEndpoint: "./api/images.json",
+          apiEndpoint: "./public/api/images.json",
           // saveEndpoint: '/api/save',
           uniqueImages: false,
           dpi: 48,
