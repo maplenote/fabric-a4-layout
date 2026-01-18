@@ -114,7 +114,20 @@ class F {
       preserveObjectStacking: !0,
       selection: !0,
       enableRetinaScaling: !1
-    }), this.setupLayout(), await this.fetchImages(), this.setupEvents(), this.bindControls(), this.updateStatusDisplay();
+    }), this.setupLayout(), await this.fetchImages(), this.setupEvents(), this.bindControls(), this.updateStatusDisplay(), this.canvas.on("after:render", (s) => this._renderBleedOverlay(s.ctx)), this.canvas.requestRenderAll();
+  }
+  _renderBleedOverlay(s) {
+    if (!this.canvas) return;
+    s.save();
+    const i = this.canvas.viewportTransform;
+    s.transform(i[0], i[1], i[2], i[3], i[4], i[5]);
+    const e = this.pageMarginPx, t = this.pageWidthPx, n = this.pageHeightPx, o = this.gap;
+    s.fillStyle = "rgba(189, 189, 255, 0.2)", s.beginPath();
+    for (let r = 0; r < this.pageCount; r++) {
+      let d, h, l, c;
+      this.orientation === "portrait" ? (d = r * (t + o), h = 0, l = t, c = n) : (d = 0, h = r * (n + o), l = n, c = t), s.rect(d, h, l, c), s.rect(d + e, h + e, l - 2 * e, c - 2 * e);
+    }
+    s.fill("evenodd"), s.restore();
   }
   bindControls() {
     const s = this.config.buttons, i = (e, t) => {
@@ -248,17 +261,17 @@ class F {
     }
     let g = this.pageCount - 1;
     const v = ((u) => this.canvas.getObjects().filter((y) => !y.isBackground).filter((y) => {
-      const w = y.getCenterPoint();
+      const C = y.getCenterPoint();
       if (h) {
-        const P = u * (l + this.gap), O = P + l;
-        return w.x >= P && w.x < O;
+        const I = u * (l + this.gap), O = I + l;
+        return C.x >= I && C.x < O;
       } else {
-        const P = u * (c + this.gap), O = P + c;
-        return w.y >= P && w.y < O;
+        const I = u * (c + this.gap), O = I + c;
+        return C.y >= I && C.y < O;
       }
     }))(g);
     let m = 0;
-    const C = this.pageMarginPx;
+    const w = this.pageMarginPx;
     if (v.length > 0) {
       let u = 0;
       v.forEach((S) => {
@@ -266,14 +279,14 @@ class F {
         if (h)
           y = S.top + S.getScaledHeight() / 2;
         else {
-          const w = g * (c + this.gap);
-          y = S.top - w + S.getScaledHeight() / 2;
+          const C = g * (c + this.gap);
+          y = S.top - C + S.getScaledHeight() / 2;
         }
         y > u && (u = y);
       }), m = u + this.gap;
     } else
-      m = C;
-    m + t.getScaledHeight() > c - this.pageMarginPx && (this.addPage(), g++, m = C);
+      m = w;
+    m + t.getScaledHeight() > c - this.pageMarginPx && (this.addPage(), g++, m = w);
     let b, E;
     if (h)
       b = g * (l + this.gap) + this.pageMarginPx + t.getScaledWidth() / 2, E = m + t.getScaledHeight() / 2;
@@ -372,8 +385,8 @@ class F {
         const g = Math.floor(h.x / (t + o));
         l = g + 1, c = h.x - g * (t + o), p = h.y;
       } else {
-        const g = t, I = Math.floor(h.y / (g + o));
-        l = I + 1, c = h.x, p = h.y - I * (g + o);
+        const g = t, P = Math.floor(h.y / (g + o));
+        l = P + 1, c = h.x, p = h.y - P * (g + o);
       }
       const f = {
         type: "image",
@@ -448,36 +461,36 @@ class F {
     for (const p of n) {
       const f = p.img_id, g = p.img_setting || {};
       if (this.config.uniqueImages && o.has(f)) {
-        const v = this.images.find((C) => C.img_id === f), m = v ? v.title || v.img_id : f;
+        const v = this.images.find((w) => w.img_id === f), m = v ? v.title || v.img_id : f;
         r.push(m);
         continue;
       }
-      const I = this.images.find((v) => v.img_id === f);
-      if (I) {
+      const P = this.images.find((v) => v.img_id === f);
+      if (P) {
         o.add(f);
         const v = (p.page_num || 1) - 1;
-        let m = 0, C = 0;
+        let m = 0, w = 0;
         if (this.orientation === "portrait")
-          m = (g.left || 0) + v * (l + c), C = g.top || 0;
+          m = (g.left || 0) + v * (l + c), w = g.top || 0;
         else {
           const y = l;
-          m = g.left || 0, C = (g.top || 0) + v * (y + c);
+          m = g.left || 0, w = (g.top || 0) + v * (y + c);
         }
         let b = g.scaleX || 1, E = g.scaleY || 1;
         if (Math.abs(h - 1) > 1e-4) {
-          const y = (g.left || 0) * h, w = (g.top || 0) * h;
+          const y = (g.left || 0) * h, C = (g.top || 0) * h;
           if (this.orientation === "portrait")
-            m = y + v * (l + c), C = w;
+            m = y + v * (l + c), w = C;
           else {
-            const P = l;
-            m = y, C = w + v * (P + c);
+            const I = l;
+            m = y, w = C + v * (I + c);
           }
           b *= h, E *= h;
         }
-        const u = I.url || I.base64, S = await T.fromURL(u);
+        const u = P.url || P.base64, S = await T.fromURL(u);
         S.set({
           left: m,
-          top: C,
+          top: w,
           angle: g.angle || 0,
           scaleX: b,
           scaleY: E,
