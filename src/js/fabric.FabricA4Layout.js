@@ -234,6 +234,58 @@ export class FabricA4Layout {
         this.setupEvents();
         this.bindControls();
         this.updateStatusDisplay();
+
+        // Render Bleed Overlay (Always on top)
+        this.canvas.on('after:render', (opt) => this._renderBleedOverlay(opt.ctx));
+        this.canvas.requestRenderAll();
+    }
+
+    _renderBleedOverlay(ctx) {
+        if (!this.canvas) return;
+
+        ctx.save();
+        
+        // Ensure we draw in the correct coordinate system (handle pan/zoom if any)
+        const vpt = this.canvas.viewportTransform;
+        ctx.transform(vpt[0], vpt[1], vpt[2], vpt[3], vpt[4], vpt[5]);
+
+        const m = this.pageMarginPx;
+        const pW = this.pageWidthPx;
+        const pH = this.pageHeightPx;
+        const gap = this.gap;
+
+        // Color: #bdbdff (Light Purple) with 0.2 Opacity
+        ctx.fillStyle = 'rgba(189, 189, 255, 0.2)';
+
+        ctx.beginPath();
+
+        for (let i = 0; i < this.pageCount; i++) {
+            let gx, gy, gw, gh;
+
+            if (this.orientation === 'portrait') {
+                gx = i * (pW + gap);
+                gy = 0;
+                gw = pW;
+                gh = pH;
+            } else {
+                // Landscape
+                gx = 0;
+                gy = i * (pH + gap);
+                gw = pH; // Visual Width
+                gh = pW; // Visual Height
+            }
+
+            // Outer Rect (Page)
+            ctx.rect(gx, gy, gw, gh);
+            
+            // Inner Rect (Safe Area)
+            ctx.rect(gx + m, gy + m, gw - 2 * m, gh - 2 * m);
+        }
+
+        // Fill using evenodd rule to create "holes" for the safe area
+        ctx.fill('evenodd');
+
+        ctx.restore();
     }
 
     bindControls() {
