@@ -192,24 +192,14 @@
     </div>
 
     <!-- Script -->
-    <script type="module">
-      // 由於 UMD build (min.js) 不支援 ES Module 的 named export，
-      // 且 ES build (js) 會嘗試尋找 'fabric' module (但在瀏覽器環境中沒有 module resolution)，
-      // 這裡最簡單的方法是：
-      // 1. 使用 UMD 版本 (.min.js)，它會將 FabricA4Layout 掛載到 window 全域物件上。
-      // 2. 因此不需要 import { ... } from ...，直接使用 window.FabricA4Layout。
-
-      // import { FabricA4Layout } from "./dist/fabric.FabricA4Layout.min.js"; // 這行移除
-    </script>
-
     <!-- 載入 UMD 版本 (非 module 方式，確保全域變數生效) -->
     <script src="./dist/fabric.FabricA4Layout.min.js"></script>
 
     <script type="module">
       // 因為我們使用 UMD script tag 載入，FabricA4Layout 已全域可用
       // FabricA4Layout 是一個物件，裡面包含了 FabricA4Layout Class
-      const FabricA4Layout =
-        window.FabricA4Layout.FabricA4Layout || window.FabricA4Layout;
+      // 根據 build 結果，Vite UMD 模式通常直接回傳 entry point export
+      const FabricA4Layout = window.FabricA4Layout.FabricA4Layout || window.FabricA4Layout;
 
       // Global reference
       window.layout = null;
@@ -245,7 +235,7 @@
           statusDisplayId: "status-display",
           errorDisplayId: "error-display",
           orientation: "portrait",
-          apiEndpoint: "./public/api/images.json",
+          apiEndpoint: "./api/images.json",
           // saveEndpoint: '/api/save',
           uniqueImages: false,
           pageMargin: 5,
@@ -342,9 +332,7 @@
           // Re-init
           await createLayout(currentConfig);
           alert(
-            `A4已重置！\nDPI: ${newDpi}\n出血: ${newMargin}mm (約 ${marginPx}px)\n方向: ${newOrientation}\n不重複限制: ${
-              newUnique ? "開啟" : "關閉"
-            }\n預設灰階: ${newGrayscale ? "開啟" : "關閉"}`
+            `A4已重置！\n          DPI: ${newDpi}\n          出血: ${newMargin}mm (約 ${marginPx}px)\n          方向: ${newOrientation}\n          不重複限制: ${newUnique ? "開啟" : "關閉"}\n          預設灰階: ${newGrayscale ? "開啟" : "關閉"}`
           );
         };
 
