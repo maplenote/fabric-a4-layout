@@ -21,6 +21,7 @@
     "dpi": 48,
     "width": 397,
     "height": 561,
+    "margin": 5,
     "pages": 2
   },
   "items": [
@@ -30,19 +31,16 @@
       "page_num": 1,
       "img_setting": {
         "is_grayscale": false,
-        "now_width": 100,
-        "now_height": 80,
-        "z-index": 0,
         "type": "image",
-        "left": 10.5,
-        "top": 20.0,
-        "angle": 0,
-        "scaleX": 0.2,
-        "scaleY": 0.2,
-        "width": 500,
-        "height": 400,
-        "originX": "left",
-        "originY": "top"
+        "left": 150.5,
+        "top": 300.0,
+        "angle": 90,
+        "scaleX": 0.5,
+        "scaleY": 0.5,
+        "width": 800,
+        "height": 600,
+        "originX": "center",
+        "originY": "center"
       }
     }
   ]
@@ -69,6 +67,7 @@
 | `dpi` | Number | `48` | 版面 DPI 設定 (影響 px 計算)。 |
 | `width` | Number | `397` | 單頁 A4 的像素寬度 (計算公式: `210mm / 25.4 * dpi`)。 |
 | `height` | Number | `561` | 單頁 A4 的像素高度 (計算公式: `297mm / 25.4 * dpi`)。 |
+| `margin` | Number | `5` | **頁面出血/邊距 (mm)**。<br>影響圖片自動排版的邊界。換算 px 公式: `Math.round((mm / 25.4) * dpi)`。 |
 | `pages` | Number | `1` | 目前文件總頁數。 |
 
 #### Items 物件 (`items`)
@@ -89,24 +88,21 @@
 | 欄位 | 類型 | 說明 |
 | :--- | :--- | :--- |
 | `is_grayscale` | Boolean | **灰階狀態**。<br>`true`: 已套用灰階濾鏡; `false`: 彩色原圖。 |
-| `now_width` | Number | **實際顯示寬度 (px)**。<br>計算公式: `width * scaleX`。前端需計算後填入。 |
-| `now_height` | Number | **實際顯示高度 (px)**。<br>計算公式: `height * scaleY`。前端需計算後填入。 |
-| `z-index` | Number | **堆疊順序**。<br>數值越大代表圖層越上面。通常與 `items` 陣列索引順序一致 (陣列最後一個元素在最上層)。 |
 
 **B. Fabric.js 標準幾何屬性**
 
 | 欄位 | 類型 | 說明 |
 | :--- | :--- | :--- |
 | `type` | String | 固定為 `"image"`。 |
-| `left` | Number | **相對 X 座標 (px)**。<br>⚠️ **重要**：此座標是相對於**該頁 (`page_num`) 左上角**的位置，而非整個 Canvas 的絕對座標。前端存檔時必須進行轉換。 |
-| `top` | Number | **相對 Y 座標 (px)**。<br>⚠️ **重要**：此座標是相對於**該頁 (`page_num`) 左上角**的位置。 |
+| `left` | Number | **相對中心點 X 座標 (px)**。<br>⚠️ **重要**：此座標是相對於**該頁 (`page_num`) 左上角**的中心點位置。 |
+| `top` | Number | **相對中心點 Y 座標 (px)**。<br>⚠️ **重要**：此座標是相對於**該頁 (`page_num`) 左上角**的中心點位置。 |
 | `angle` | Number | **旋轉角度**。<br>依需求僅接受 90 的倍數 (0, 90, 180, 270)。 |
 | `scaleX` | Number | X 軸縮放比例 (通常與 `scaleY` 相同，因鎖定等比縮放)。 |
 | `scaleY` | Number | Y 軸縮放比例。 |
 | `width` | Number | 原始圖片寬度 (px)。 |
 | `height` | Number | 原始圖片高度 (px)。 |
-| `originX` | String | 強制設定為 `"left"` (修正 Fabric v7 預設行為)。 |
-| `originY` | String | 強制設定為 `"top"` (修正 Fabric v7 預設行為)。 |
+| `originX` | String | 強制設定為 `"center"`。 |
+| `originY` | String | 強制設定為 `"center"`。 |
 
 ## 2. 業務邏輯備註
 
@@ -201,6 +197,7 @@
         "dpi": 48,
         "width": 397,
         "height": 561,
+        "margin": 5,
         "pages": 2
     },
     "items": [
@@ -210,19 +207,16 @@
         "page_num": 1,
         "img_setting": {
             "is_grayscale": false,
-            "now_width": 100,
-            "now_height": 80,
-            "z-index": 0,
             "type": "image",
-            "left": 10.5,
-            "top": 20.0,
-            "angle": 0,
-            "scaleX": 0.2,
-            "scaleY": 0.2,
-            "width": 500,
-            "height": 400,
-            "originX": "left",
-            "originY": "top"
+            "left": 150.5,
+            "top": 300.0,
+            "angle": 90,
+            "scaleX": 0.5,
+            "scaleY": 0.5,
+            "width": 800,
+            "height": 600,
+            "originX": "center",
+            "originY": "center"
         }
         }
     ]
@@ -235,4 +229,5 @@
 1. **來源圖片匹配**：前端需透過 `img_id` 到已經載入的「圖片列表 (API #3)」中尋找對應的圖片來源 (`base64` 或 `url`)。
 2. **圖片遺失處理**：若 `img_id` 在圖片列表中找不到，則視為該圖片已過期或被刪除。
     * **行為**：**不予顯示**該圖片，直接濾除，並在 UI 上顯示錯誤訊息提醒使用者「部分圖片已失效並自動移除」。
-3. **座標還原**：需將 `img_setting.left/top` (相對頁面座標) 加上 `(page_num - 1) * (page_size + gap)` 還原為 Canvas 絕對座標。
+3. **座標還原**：`img_setting.left/top` 為相對中心點座標，需加上 `(page_num - 1) * (page_size + gap)` 還原為 Canvas 絕對座標。
+4. **堆疊順序**：建議依 `items` 陣列順序依序加入畫布 (最後一個在最上層)。

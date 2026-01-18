@@ -31,7 +31,7 @@ fabric-a4-layout/
     - `renderSidebar()` 負責側邊欄 DOM 操作與互動邏輯 (Click-to-Add/Remove)。
     - `updateStatusDisplay()` / `showError()` 負責資訊反饋 (支援 DOM ID 指定)。
 5.  **畫布操作區 (Canvas Ops)**:
-    -   `addImageToCanvas()`: 圖片實例化、自訂控制項注入、自動縮放(95% Fit)、自動流式排版(Flow Layout)與自動換頁。
+    -   `addImageToCanvas()`: 圖片實例化、自訂控制項注入、自動縮放(Safe Area Fit)、自動流式排版(Flow Layout)、靠左對齊(Left Align with Margin)與自動換頁。
     -   `setupLayout()`: 背景頁面繪製、Canvas 尺寸更新。
     -   `addPage()` / `removePage()`: 動態調整總頁數。
     -   `clearCanvas()` / `cleanupOutOfBounds()`: 清理畫布物件。
@@ -51,7 +51,7 @@ fabric-a4-layout/
 
 ### 2.1 座標系統與旋轉模擬
 -   **策略**: 採用「中心點映射」邏輯。
--   **基準點**: 全域強制使用 `originX: 'left', originY: 'top'`。
+-   **基準點**: 全域強制使用 `originX: 'center', originY: 'center'`。
 
 ### 2.2 高度可配置性 (Configurability)
 -   **UI 解耦**: 透過 `config.buttons` 映射按鈕 ID，支援 `refreshImages` 與 `clearCanvas`。

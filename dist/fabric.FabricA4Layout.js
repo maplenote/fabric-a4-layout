@@ -1,5 +1,5 @@
-import { Control as E, filters as T, util as O, Canvas as H, FabricImage as z, Rect as B, Point as W } from "fabric";
-const P = {
+import { Control as z, filters as H, util as M, Canvas as B, FabricImage as T, Rect as W, Point as _ } from "fabric";
+const k = {
   status: {
     setting: "設定:",
     dpi: "DPI",
@@ -8,6 +8,7 @@ const P = {
     portrait: "直式",
     landscape: "橫式",
     size: "A4尺寸:",
+    margin: "出血(mm):",
     grayscale: "灰階預設:",
     on: "開啟",
     off: "關閉"
@@ -26,9 +27,9 @@ const P = {
     removeImage: `此圖片已在A4上。是否要移除它？
 (這能幫助您找回迷失的圖片)`
   }
-}, j = (a, t, e, s, i) => {
-  a.save(), a.translate(t, e), a.rotate(O.degreesToRadians(i.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "#F44336", a.fill(), a.lineWidth = 2, a.strokeStyle = "white", a.beginPath(), a.moveTo(-24 / 4, -24 / 4), a.lineTo(24 / 4, 24 / 4), a.moveTo(24 / 4, -24 / 4), a.lineTo(-24 / 4, 24 / 4), a.stroke(), a.restore();
-}, A = new E({
+}, A = (a, s, i, e, t) => {
+  a.save(), a.translate(s, i), a.rotate(M.degreesToRadians(t.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "#F44336", a.fill(), a.lineWidth = 2, a.strokeStyle = "white", a.beginPath(), a.moveTo(-24 / 4, -24 / 4), a.lineTo(24 / 4, 24 / 4), a.moveTo(24 / 4, -24 / 4), a.lineTo(-24 / 4, 24 / 4), a.stroke(), a.restore();
+}, L = new z({
   x: 0.5,
   y: -0.5,
   // Top Right
@@ -37,14 +38,14 @@ const P = {
   sizeX: 28,
   sizeY: 28,
   cursorStyle: "pointer",
-  mouseUpHandler: (a, t) => {
-    const e = t.target, s = e.canvas;
-    return s.remove(e), e.imageId && s.fire("object:custom:delete", { target: e }), s.requestRenderAll(), !0;
+  mouseUpHandler: (a, s) => {
+    const i = s.target, e = i.canvas;
+    return e.remove(i), i.imageId && e.fire("object:custom:delete", { target: i }), e.requestRenderAll(), !0;
   },
-  render: j
-}), R = (a, t, e, s, i) => {
-  a.save(), a.translate(t, e), a.rotate(O.degreesToRadians(i.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.lineWidth = 1, a.strokeStyle = "#333", a.stroke(), a.beginPath(), a.arc(0, 0, 24 / 2, -Math.PI / 2, Math.PI / 2, !1), a.fillStyle = "black", a.fill(), a.restore();
-}, L = new E({
+  render: A
+}), R = (a, s, i, e, t) => {
+  a.save(), a.translate(s, i), a.rotate(M.degreesToRadians(t.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.lineWidth = 1, a.strokeStyle = "#333", a.stroke(), a.beginPath(), a.arc(0, 0, 24 / 2, -Math.PI / 2, Math.PI / 2, !1), a.fillStyle = "black", a.fill(), a.restore();
+}, Y = new z({
   x: -0.5,
   y: 0.5,
   // Bottom Left
@@ -53,16 +54,16 @@ const P = {
   sizeX: 28,
   sizeY: 28,
   cursorStyle: "pointer",
-  mouseUpHandler: (a, t) => {
-    const e = t.target, s = e.canvas;
-    return s.setCursor("wait"), setTimeout(() => {
-      e.filters.some((n) => n.type === "Grayscale") ? e.filters = e.filters.filter((n) => n.type !== "Grayscale") : e.filters.push(new T.Grayscale()), e.applyFilters(), s.setCursor("default"), s.requestRenderAll();
+  mouseUpHandler: (a, s) => {
+    const i = s.target, e = i.canvas;
+    return e.setCursor("wait"), setTimeout(() => {
+      i.filters.some((n) => n.type === "Grayscale") ? i.filters = i.filters.filter((n) => n.type !== "Grayscale") : i.filters.push(new H.Grayscale()), i.applyFilters(), e.setCursor("default"), e.requestRenderAll();
     }, 50), !0;
   },
   render: R
-}), $ = (a, t, e, s, i) => {
-  a.save(), a.translate(t, e), a.rotate(O.degreesToRadians(i.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.strokeStyle = "#2196F3", a.lineWidth = 2, a.beginPath(), a.arc(0, 0, 24 / 4, 0, Math.PI * 1.5, !1), a.stroke(), a.fillStyle = "#2196F3", a.beginPath(), a.moveTo(24 / 4, -24 / 8), a.lineTo(24 / 4 + 4, 0), a.lineTo(24 / 4 - 4, 0), a.fill(), a.restore();
-}, D = new E({
+}), $ = (a, s, i, e, t) => {
+  a.save(), a.translate(s, i), a.rotate(M.degreesToRadians(t.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.strokeStyle = "#2196F3", a.lineWidth = 2, a.beginPath(), a.arc(0, 0, 24 / 4, 0, Math.PI * 1.5, !1), a.stroke(), a.fillStyle = "#2196F3", a.beginPath(), a.moveTo(24 / 4, -24 / 8), a.lineTo(24 / 4 + 4, 0), a.lineTo(24 / 4 - 4, 0), a.fill(), a.restore();
+}, X = new z({
   x: -0.5,
   y: -0.5,
   // Top Left
@@ -71,20 +72,23 @@ const P = {
   sizeX: 28,
   sizeY: 28,
   cursorStyle: "crosshair",
-  mouseUpHandler: (a, t) => {
-    const e = t.target, s = e.canvas, i = e.angle || 0;
-    return e.set("angle", (i + 90) % 360), e.setCoords(), s.requestRenderAll(), !0;
+  mouseUpHandler: (a, s) => {
+    const i = s.target, e = i.canvas, t = i.angle || 0;
+    return i.set("angle", (t + 90) % 360), i.setCoords(), e.requestRenderAll(), !0;
   },
   render: $
 });
-class _ {
-  constructor(t) {
+class F {
+  constructor(s) {
+    var e, t, n;
     this.config = {
       dpi: 48,
       width: 210,
       // mm
       height: 297,
       // mm
+      pageMargin: 5,
+      // mm (Default 5mm margin/bleed)
       orientation: "portrait",
       saveWithBase64: !1,
       uniqueImages: !1,
@@ -96,57 +100,57 @@ class _ {
       statusDisplayId: null,
       errorDisplayId: null,
       locale: {},
-      ...t
+      ...s
     }, this.t = {
-      status: { ...P.status, ...this.config.locale?.status || {} },
-      error: { ...P.error, ...this.config.locale?.error || {} },
-      confirm: { ...P.confirm, ...this.config.locale?.confirm || {} }
+      status: { ...k.status, ...((e = this.config.locale) == null ? void 0 : e.status) || {} },
+      error: { ...k.error, ...((t = this.config.locale) == null ? void 0 : t.error) || {} },
+      confirm: { ...k.confirm, ...((n = this.config.locale) == null ? void 0 : n.confirm) || {} }
     }, this.config.dpi < 24 && (this.config.dpi = 24), this.config.dpi > 192 && (this.config.dpi = 192);
-    const e = (s) => Math.round(s / 25.4 * this.config.dpi);
-    this.pageWidthPx = e(this.config.width), this.pageHeightPx = e(this.config.height), this.gap = 4, this.canvasId = this.config.canvasId, this.canvas = null, this.images = [], this.pageCount = 1, this.orientation = this.config.orientation;
+    const i = (o) => Math.round(o / 25.4 * this.config.dpi);
+    this.pageWidthPx = i(this.config.width), this.pageHeightPx = i(this.config.height), this.pageMarginPx = i(this.config.pageMargin), this.gap = 4, this.canvasId = this.config.canvasId, this.canvas = null, this.images = [], this.pageCount = 1, this.orientation = this.config.orientation;
   }
   async init() {
-    this.canvas = new H(this.canvasId, {
+    this.canvas = new B(this.canvasId, {
       preserveObjectStacking: !0,
       selection: !0,
       enableRetinaScaling: !1
     }), this.setupLayout(), await this.fetchImages(), this.setupEvents(), this.bindControls(), this.updateStatusDisplay();
   }
   bindControls() {
-    const t = this.config.buttons, e = (s, i) => {
-      if (s) {
-        const n = document.getElementById(s);
+    const s = this.config.buttons, i = (e, t) => {
+      if (e) {
+        const n = document.getElementById(e);
         if (n) {
           const o = n.cloneNode(!0);
-          n.parentNode.replaceChild(o, n), o.onclick = i;
+          n.parentNode.replaceChild(o, n), o.onclick = t;
         }
       }
     };
-    if (e(t.orientation, () => {
+    if (i(s.orientation, () => {
       this.toggleOrientation(), this.updateStatusDisplay();
-    }), e(t.addPage, () => {
+    }), i(s.addPage, () => {
       this.addPage(), this.updateStatusDisplay();
-    }), e(t.removePage, () => {
+    }), i(s.removePage, () => {
       this.removePage(), this.updateStatusDisplay();
-    }), e(t.refreshImages, async () => {
+    }), i(s.refreshImages, async () => {
       this.cleanupOutOfBounds(), await this.fetchImages(), this.showError(this.t.error.listUpdated, !0);
-    }), e(t.clearCanvas, () => {
+    }), i(s.clearCanvas, () => {
       confirm(this.t.confirm.clearCanvas) && (this.clearCanvas(), this.showError(this.t.error.canvasCleared, !0));
-    }), t.save) {
-      const s = document.getElementById(t.save);
-      if (s) {
-        const i = s.cloneNode(!0);
-        s.parentNode.replaceChild(i, s), i.onclick = () => {
+    }), s.save) {
+      const e = document.getElementById(s.save);
+      if (e) {
+        const t = e.cloneNode(!0);
+        e.parentNode.replaceChild(t, e), t.onclick = () => {
           const n = this.save();
           this.config.onSave && this.config.onSave(n);
         };
       }
     }
-    if (t.load) {
-      const s = document.getElementById(t.load);
-      if (s) {
-        const i = s.cloneNode(!0);
-        s.parentNode.replaceChild(i, s), i.onclick = async () => {
+    if (s.load) {
+      const e = document.getElementById(s.load);
+      if (e) {
+        const t = e.cloneNode(!0);
+        e.parentNode.replaceChild(t, e), t.onclick = async () => {
           let n = null;
           if (this.config.onLoad && (n = this.config.onLoad()), n) {
             const o = await this.load(n);
@@ -156,33 +160,34 @@ class _ {
         };
       }
     }
-    if (t.settings && this.config.onSettingsClick) {
-      const s = document.getElementById(t.settings);
-      if (s) {
-        const i = s.cloneNode(!0);
-        s.parentNode.replaceChild(i, s), i.onclick = this.config.onSettingsClick;
+    if (s.settings && this.config.onSettingsClick) {
+      const e = document.getElementById(s.settings);
+      if (e) {
+        const t = e.cloneNode(!0);
+        e.parentNode.replaceChild(t, e), t.onclick = this.config.onSettingsClick;
       }
     }
   }
-  showError(t, e = !1) {
+  showError(s, i = !1) {
     if (this.config.errorDisplayId) {
-      const s = document.getElementById(this.config.errorDisplayId);
-      s && (s.style.display = "block", s.innerText = t, s.style.backgroundColor = e ? "#e8f5e9" : "#ffebee", s.style.color = e ? "#2e7d32" : "#c62828", s.style.borderColor = e ? "#a5d6a7" : "#ef9a9a", setTimeout(() => {
-        s.style.display = "none";
+      const e = document.getElementById(this.config.errorDisplayId);
+      e && (e.style.display = "block", e.innerText = s, e.style.backgroundColor = i ? "#e8f5e9" : "#ffebee", e.style.color = i ? "#2e7d32" : "#c62828", e.style.borderColor = i ? "#a5d6a7" : "#ef9a9a", setTimeout(() => {
+        e.style.display = "none";
       }, 5e3));
     } else
-      console.log(e ? "Info:" : "Error:", t), e || alert(t);
+      console.log(i ? "Info:" : "Error:", s), i || alert(s);
   }
   updateStatusDisplay() {
     if (this.config.statusDisplayId) {
-      const t = document.getElementById(this.config.statusDisplayId);
-      if (t && this.canvas) {
-        const e = this.canvas.getWidth(), s = this.canvas.getHeight(), i = this.orientation === "portrait" ? this.t.status.portrait : this.t.status.landscape;
-        t.innerHTML = `
+      const s = document.getElementById(this.config.statusDisplayId);
+      if (s && this.canvas) {
+        const i = this.canvas.getWidth(), e = this.canvas.getHeight(), t = this.orientation === "portrait" ? this.t.status.portrait : this.t.status.landscape;
+        s.innerHTML = `
                 <strong>${this.t.status.setting}</strong> ${this.t.status.dpi} ${this.config.dpi} | 
                 <strong>${this.t.status.pages}</strong> ${this.pageCount} | 
-                <strong>${this.t.status.orientation}</strong> ${i} | 
-                <strong>${this.t.status.size}</strong> ${e} x ${s} px |
+                <strong>${this.t.status.orientation}</strong> ${t} | 
+                <strong>${this.t.status.size}</strong> ${i} x ${e} px |
+                <strong>${this.t.status.margin}</strong> ${this.config.pageMargin} |
                 <strong>${this.t.status.grayscale}</strong> ${this.config.defaultGrayscale ? this.t.status.on : this.t.status.off}
             `;
       }
@@ -190,111 +195,111 @@ class _ {
   }
   async fetchImages() {
     try {
-      const t = await fetch(this.config.apiEndpoint);
-      if (!t.ok) throw new Error(this.t.error.fetchFailed);
-      const e = await t.json();
-      if (e.succ === !1)
-        throw new Error(e.error || this.t.error.fetchFailed);
-      this.images = e.data || [], this.renderSidebar();
-    } catch (t) {
-      console.error(this.t.error.readError, t), this.showError(`${this.t.error.fetchFailed}: ${t.message}`), this.images = [], this.renderSidebar();
+      const s = await fetch(this.config.apiEndpoint);
+      if (!s.ok) throw new Error(this.t.error.fetchFailed);
+      const i = await s.json();
+      if (i.succ === !1)
+        throw new Error(i.error || this.t.error.fetchFailed);
+      this.images = i.data || [], this.renderSidebar();
+    } catch (s) {
+      console.error(this.t.error.readError, s), this.showError(`${this.t.error.fetchFailed}: ${s.message}`), this.images = [], this.renderSidebar();
     }
   }
   renderSidebar() {
-    const t = document.getElementById("image-sidebar");
-    t && (t.innerHTML = "", this.images.forEach((e) => {
-      const s = document.createElement("div");
-      s.className = "image-item", s.dataset.id = e.img_id;
-      const i = this.config.uniqueImages && this.isImageOnCanvas(e.img_id);
-      s.onclick = () => {
-        i ? confirm(this.t.confirm.removeImage) && (this.canvas.getObjects().filter((d) => d.imageId === e.img_id).forEach((d) => this.canvas.remove(d)), this.updateSidebarStatus(e.img_id, !1), this.showError(this.t.error.removedFromCanvas, !0)) : this.addImageToCanvas(e.img_id);
-      }, i && (s.classList.add("disabled"), s.title = "已在A4上 (點擊可移除)", s.style.cursor = "help");
+    const s = document.getElementById("image-sidebar");
+    s && (s.innerHTML = "", this.images.forEach((i) => {
+      const e = document.createElement("div");
+      e.className = "image-item", e.dataset.id = i.img_id;
+      const t = this.config.uniqueImages && this.isImageOnCanvas(i.img_id);
+      e.onclick = () => {
+        t ? confirm(this.t.confirm.removeImage) && (this.canvas.getObjects().filter((d) => d.imageId === i.img_id).forEach((d) => this.canvas.remove(d)), this.updateSidebarStatus(i.img_id, !1), this.showError(this.t.error.removedFromCanvas, !0)) : this.addImageToCanvas(i.img_id);
+      }, t && (e.classList.add("disabled"), e.title = "已在A4上 (點擊可移除)", e.style.cursor = "help");
       const n = document.createElement("img");
-      n.src = e.url || e.base64, n.draggable = !1;
+      n.src = i.url || i.base64, n.draggable = !1;
       const o = document.createElement("span");
-      o.className = "label", o.innerText = e.title || e.img_id, s.appendChild(n), s.appendChild(o), t.appendChild(s);
+      o.className = "label", o.innerText = i.title || i.img_id, e.appendChild(n), e.appendChild(o), s.appendChild(e);
     }));
   }
-  isImageOnCanvas(t) {
-    return this.canvas.getObjects().some((e) => e.imageId === t);
+  isImageOnCanvas(s) {
+    return this.canvas.getObjects().some((i) => i.imageId === s);
   }
-  updateSidebarStatus(t, e) {
+  updateSidebarStatus(s, i) {
     this.config.uniqueImages && this.renderSidebar();
   }
-  async addImageToCanvas(t) {
-    if (this.config.uniqueImages && this.isImageOnCanvas(t)) return;
-    const e = this.images.find((f) => f.img_id === t);
-    if (!e) return;
-    const s = e.url || e.base64, i = await z.fromURL(s);
-    i.set({
-      imageId: t,
+  async addImageToCanvas(s) {
+    if (this.config.uniqueImages && this.isImageOnCanvas(s)) return;
+    const i = this.images.find((u) => u.img_id === s);
+    if (!i) return;
+    const e = i.url || i.base64, t = await T.fromURL(e);
+    t.set({
+      imageId: s,
       cornerSize: 10,
       transparentCorners: !1,
-      originX: "left",
-      originY: "top"
+      originX: "center",
+      originY: "center"
     });
     const o = this.config.dpi / 96;
-    let h = 1, d = 1;
-    e.original_width && e.original_height && i.width > 0 && i.height > 0 ? (h = e.original_width / i.width * o, d = e.original_height / i.height * o) : (h = o, d = o), i.scaleX = h, i.scaleY = d, this.config.defaultGrayscale && (i.filters.push(new T.Grayscale()), i.applyFilters()), this.setupCustomControls(i);
-    const c = this.orientation === "portrait", l = c ? this.pageWidthPx : this.pageHeightPx, r = c ? this.pageHeightPx : this.pageWidthPx;
-    if (i.getScaledWidth() > l || i.getScaledHeight() > r) {
-      const f = Math.min(l / i.getScaledWidth(), r / i.getScaledHeight()) * 0.95;
-      i.scaleX *= f, i.scaleY *= f;
+    let r = 1, d = 1;
+    i.original_width && i.original_height && t.width > 0 && t.height > 0 ? (r = i.original_width / t.width * o, d = i.original_height / t.height * o) : (r = o, d = o), t.scaleX = r, t.scaleY = d, this.config.defaultGrayscale && (t.filters.push(new H.Grayscale()), t.applyFilters()), this.setupCustomControls(t);
+    const h = this.orientation === "portrait", l = h ? this.pageWidthPx : this.pageHeightPx, c = h ? this.pageHeightPx : this.pageWidthPx, p = l - this.pageMarginPx * 2, f = c - this.pageMarginPx * 2;
+    if (t.getScaledWidth() > p || t.getScaledHeight() > f) {
+      const u = Math.min(p / t.getScaledWidth(), f / t.getScaledHeight());
+      t.scaleX *= u, t.scaleY *= u;
     }
     let g = this.pageCount - 1;
-    const y = ((f) => this.canvas.getObjects().filter((u) => !u.isBackground).filter((u) => {
-      const v = u.getCenterPoint();
-      if (c) {
-        const C = f * (l + this.gap), w = C + l;
-        return v.x >= C && v.x < w;
+    const v = ((u) => this.canvas.getObjects().filter((y) => !y.isBackground).filter((y) => {
+      const w = y.getCenterPoint();
+      if (h) {
+        const P = u * (l + this.gap), O = P + l;
+        return w.x >= P && w.x < O;
       } else {
-        const C = f * (r + this.gap), w = C + r;
-        return v.y >= C && v.y < w;
+        const P = u * (c + this.gap), O = P + c;
+        return w.y >= P && w.y < O;
       }
     }))(g);
     let m = 0;
-    const k = r * 0.025;
-    if (y.length > 0) {
-      let f = 0;
-      y.forEach((b) => {
-        let u = 0;
-        if (c)
-          u = b.top + b.getScaledHeight();
+    const C = this.pageMarginPx;
+    if (v.length > 0) {
+      let u = 0;
+      v.forEach((S) => {
+        let y = 0;
+        if (h)
+          y = S.top + S.getScaledHeight() / 2;
         else {
-          const v = g * (r + this.gap);
-          u = b.top - v + b.getScaledHeight();
+          const w = g * (c + this.gap);
+          y = S.top - w + S.getScaledHeight() / 2;
         }
-        u > f && (f = u);
-      }), m = f + this.gap;
+        y > u && (u = y);
+      }), m = u + this.gap;
     } else
-      m = k;
-    m + i.getScaledHeight() > r && (this.addPage(), g++, m = k);
-    let S, I;
-    if (c)
-      S = g * (l + this.gap) + (l - i.getScaledWidth()) / 2, I = m;
+      m = C;
+    m + t.getScaledHeight() > c - this.pageMarginPx && (this.addPage(), g++, m = C);
+    let b, E;
+    if (h)
+      b = g * (l + this.gap) + this.pageMarginPx + t.getScaledWidth() / 2, E = m + t.getScaledHeight() / 2;
     else {
-      const f = g * (r + this.gap);
-      S = (l - i.getScaledWidth()) / 2, I = f + m;
+      const u = g * (c + this.gap);
+      b = this.pageMarginPx + t.getScaledWidth() / 2, E = u + m + t.getScaledHeight() / 2;
     }
-    i.set({ left: S, top: I }), this.canvas.add(i), this.canvas.setActiveObject(i), this.updateSidebarStatus(t, !0);
+    t.set({ left: b, top: E }), this.canvas.add(t), this.canvas.setActiveObject(t), this.updateSidebarStatus(s, !0);
   }
-  setupCustomControls(t) {
-    delete t.controls.ml, delete t.controls.mr, delete t.controls.mt, delete t.controls.mb, delete t.controls.mtr, t.controls.deleteControl = A, t.controls.grayscaleControl = L, t.controls.rotate90Control = D;
+  setupCustomControls(s) {
+    delete s.controls.ml, delete s.controls.mr, delete s.controls.mt, delete s.controls.mb, delete s.controls.mtr, s.controls.deleteControl = L, s.controls.grayscaleControl = Y, s.controls.rotate90Control = X;
   }
   setupLayout() {
-    let t, e;
-    const s = this.canvas.getObjects().filter((i) => i.isBackground);
-    if (this.canvas.remove(...s), this.orientation === "portrait") {
-      const i = this.pageWidthPx, n = this.pageHeightPx;
-      e = n, t = (i + this.gap) * this.pageCount - this.gap, this.canvas.setDimensions(
-        { width: t, height: e },
+    let s, i;
+    const e = this.canvas.getObjects().filter((t) => t.isBackground);
+    if (this.canvas.remove(...e), this.orientation === "portrait") {
+      const t = this.pageWidthPx, n = this.pageHeightPx;
+      i = n, s = (t + this.gap) * this.pageCount - this.gap, this.canvas.setDimensions(
+        { width: s, height: i },
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const h = new B({
-          left: o * (i + this.gap),
+        const r = new W({
+          left: o * (t + this.gap),
           top: 0,
-          width: i,
+          width: t,
           height: n,
           fill: "white",
           stroke: "#999",
@@ -306,19 +311,19 @@ class _ {
           originX: "left",
           originY: "top"
         });
-        this.canvas.add(h), this.canvas.sendObjectToBack(h);
+        this.canvas.add(r), this.canvas.sendObjectToBack(r);
       }
     } else {
-      const i = this.pageHeightPx, n = this.pageWidthPx;
-      t = i, e = (n + this.gap) * this.pageCount - this.gap, this.canvas.setDimensions(
-        { width: t, height: e },
+      const t = this.pageHeightPx, n = this.pageWidthPx;
+      s = t, i = (n + this.gap) * this.pageCount - this.gap, this.canvas.setDimensions(
+        { width: s, height: i },
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const h = new B({
+        const r = new W({
           left: 0,
           top: o * (n + this.gap),
-          width: i,
+          width: t,
           height: n,
           fill: "white",
           stroke: "#999",
@@ -330,141 +335,204 @@ class _ {
           originX: "left",
           originY: "top"
         });
-        this.canvas.add(h), this.canvas.sendObjectToBack(h);
+        this.canvas.add(r), this.canvas.sendObjectToBack(r);
       }
     }
     this.canvas.calcOffset(), this.canvas.requestRenderAll();
   }
   toggleOrientation() {
-    const t = this.orientation;
-    this.orientation = t === "portrait" ? "landscape" : "portrait", this.canvas.getObjects().filter((s) => !s.isBackground).forEach((s) => {
-      const i = s.getCenterPoint();
-      let n = 0, o = 0, h = 0;
-      const d = this.pageWidthPx, c = this.pageHeightPx;
-      if (t === "portrait")
-        n = Math.floor(i.x / (d + this.gap)), o = i.x - n * (d + this.gap), h = i.y;
+    const s = this.orientation;
+    this.orientation = s === "portrait" ? "landscape" : "portrait", this.canvas.getObjects().filter((e) => !e.isBackground).forEach((e) => {
+      const t = e.getCenterPoint();
+      let n = 0, o = 0, r = 0;
+      const d = this.pageWidthPx, h = this.pageHeightPx;
+      if (s === "portrait")
+        n = Math.floor(t.x / (d + this.gap)), o = t.x - n * (d + this.gap), r = t.y;
       else {
-        const y = d;
-        n = Math.floor(i.y / (y + this.gap)), o = i.x, h = i.y - n * (y + this.gap);
+        const g = d;
+        n = Math.floor(t.y / (g + this.gap)), o = t.x, r = t.y - n * (g + this.gap);
       }
-      let l, r;
-      t === "portrait" ? (l = c - h, r = o, s.angle = (s.angle || 0) + 90) : (l = h, r = c - o, s.angle = (s.angle || 0) - 90);
-      let g, p;
-      this.orientation === "portrait" ? (g = n * (d + this.gap) + l, p = r) : (g = l, p = n * (d + this.gap) + r), s.setPositionByOrigin(new W(g, p), "center", "center"), s.setCoords();
+      let l, c;
+      s === "portrait" ? (l = h - r, c = o, e.angle = (e.angle || 0) + 90) : (l = r, c = h - o, e.angle = (e.angle || 0) - 90);
+      let p, f;
+      this.orientation === "portrait" ? (p = n * (d + this.gap) + l, f = c) : (p = l, f = n * (d + this.gap) + c), e.setPositionByOrigin(new _(p, f), "center", "center"), e.setCoords();
     }), this.setupLayout();
   }
   setupEvents() {
-    this.canvas.on("object:custom:delete", (t) => {
-      t.target && t.target.imageId && this.updateSidebarStatus(t.target.imageId, !1);
+    this.canvas.on("object:custom:delete", (s) => {
+      s.target && s.target.imageId && this.updateSidebarStatus(s.target.imageId, !1);
     });
   }
-  save(t = {}) {
-    const e = this.canvas.toObject(["imageId", "id"]);
-    return e.objects = e.objects.filter((s) => !s.isBackground), this.config.saveWithBase64 || e.objects.forEach((s) => {
-      s.type === "image" && delete s.src;
+  save(s = {}) {
+    const i = this.canvas.getObjects().filter((r) => !r.isBackground), e = [], t = this.pageWidthPx, n = this.pageHeightPx, o = this.gap;
+    return i.forEach((r, d) => {
+      const h = r.getCenterPoint();
+      let l = 1, c = 0, p = 0;
+      if (this.orientation === "portrait") {
+        const g = Math.floor(h.x / (t + o));
+        l = g + 1, c = h.x - g * (t + o), p = h.y;
+      } else {
+        const g = t, I = Math.floor(h.y / (g + o));
+        l = I + 1, c = h.x, p = h.y - I * (g + o);
+      }
+      const f = {
+        type: "image",
+        originX: "center",
+        originY: "center",
+        left: c,
+        top: p,
+        angle: r.angle || 0,
+        width: r.width,
+        height: r.height,
+        scaleX: r.scaleX || 1,
+        scaleY: r.scaleY || 1,
+        is_grayscale: r.filters.some((g) => g.type === "Grayscale")
+      };
+      e.push({
+        seq_no: d + 1,
+        img_id: r.imageId,
+        page_num: l,
+        img_setting: f
+      });
     }), {
-      version: "1.0",
-      timestamp: Date.now(),
-      orientation: this.orientation,
-      pageCount: this.pageCount,
-      dpi: this.config.dpi,
-      canvasObjects: e.objects,
-      data: { ...this.config.data, ...t }
+      data: { ...this.config.data, ...s },
+      page: {
+        orientation: this.orientation,
+        dpi: this.config.dpi,
+        width: this.orientation === "portrait" ? t : n,
+        height: this.orientation === "portrait" ? n : t,
+        margin: this.config.pageMargin,
+        pages: this.pageCount
+      },
+      items: e
     };
   }
-  async saveToBackend(t = {}) {
-    const e = this.save(t);
+  async saveToBackend(s = {}) {
+    const i = this.save(s);
     if (!this.config.saveEndpoint)
       throw new Error("No saveEndpoint configured.");
     try {
-      const s = await fetch(this.config.saveEndpoint, {
+      const e = await fetch(this.config.saveEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json"
         },
-        body: JSON.stringify(e)
+        body: JSON.stringify(i)
       });
-      if (!s.ok)
-        throw new Error(`HTTP error! status: ${s.status}`);
-      const i = await s.json();
-      if (i.succ === !1)
-        throw new Error(i.error || "Server reported failure.");
-      return i;
-    } catch (s) {
-      throw console.error("Save failed:", s), s;
+      if (!e.ok)
+        throw new Error(`HTTP error! status: ${e.status}`);
+      const t = await e.json();
+      if (t.succ === !1)
+        throw new Error(t.error || "Server reported failure.");
+      return t;
+    } catch (e) {
+      throw console.error("Save failed:", e), e;
     }
   }
-  async load(t) {
-    if (!t) return { success: !1, message: "No data" };
-    let e = t;
-    if ("succ" in t) {
-      if (t.succ === !1)
-        return { success: !1, message: t.error || "Unknown error from API data" };
-      t.data && (e = t.data);
+  async load(s) {
+    if (!s) return { success: !1, message: "No data" };
+    let i = s;
+    if ("succ" in s) {
+      if (s.succ === !1)
+        return { success: !1, message: s.error || "Unknown error from API data" };
+      s.data && (i = s.data);
     }
-    const s = e;
-    this.canvas.clear(), this.orientation = s.orientation || "portrait", this.pageCount = s.pageCount || 1, this.setupLayout();
-    const i = s.canvasObjects || [], n = /* @__PURE__ */ new Set(), o = [], h = s.dpi || this.config.dpi, d = this.config.dpi / h;
-    for (const c of i) {
-      if (this.config.uniqueImages && n.has(c.imageId)) {
-        const r = this.images.find((p) => p.img_id === c.imageId), g = r ? r.title || r.img_id : c.imageId;
-        o.push(g);
+    const e = i;
+    this.canvas.clear(), this.orientation = e.page && e.page.orientation || e.orientation || "portrait", this.pageCount = e.page && e.page.pages || e.pageCount || 1, e.page && typeof e.page.margin < "u" ? this.config.pageMargin = e.page.margin : typeof e.margin < "u" && (this.config.pageMargin = e.margin);
+    const t = (p) => Math.round(p / 25.4 * this.config.dpi);
+    this.pageMarginPx = t(this.config.pageMargin), this.setupLayout();
+    const n = e.items || [], o = /* @__PURE__ */ new Set(), r = [], d = e.page && e.page.dpi || e.dpi || this.config.dpi, h = this.config.dpi / d, l = this.pageWidthPx;
+    this.pageHeightPx;
+    const c = this.gap;
+    for (const p of n) {
+      const f = p.img_id, g = p.img_setting || {};
+      if (this.config.uniqueImages && o.has(f)) {
+        const v = this.images.find((C) => C.img_id === f), m = v ? v.title || v.img_id : f;
+        r.push(m);
         continue;
       }
-      const l = this.images.find((r) => r.img_id === c.imageId);
-      if (l) {
-        n.add(c.imageId);
-        const r = { ...c };
-        Math.abs(d - 1) > 1e-4 && (r.left *= d, r.top *= d, r.scaleX = (r.scaleX || 1) * d, r.scaleY = (r.scaleY || 1) * d);
-        const g = l.url || l.base64, p = await z.fromURL(g);
-        p.set(r), p.set({ src: g }), c.filters && c.filters.length > 0 && p.applyFilters(), this.setupCustomControls(p), this.canvas.add(p), this.updateSidebarStatus(c.imageId, !0);
+      const I = this.images.find((v) => v.img_id === f);
+      if (I) {
+        o.add(f);
+        const v = (p.page_num || 1) - 1;
+        let m = 0, C = 0;
+        if (this.orientation === "portrait")
+          m = (g.left || 0) + v * (l + c), C = g.top || 0;
+        else {
+          const y = l;
+          m = g.left || 0, C = (g.top || 0) + v * (y + c);
+        }
+        let b = g.scaleX || 1, E = g.scaleY || 1;
+        if (Math.abs(h - 1) > 1e-4) {
+          const y = (g.left || 0) * h, w = (g.top || 0) * h;
+          if (this.orientation === "portrait")
+            m = y + v * (l + c), C = w;
+          else {
+            const P = l;
+            m = y, C = w + v * (P + c);
+          }
+          b *= h, E *= h;
+        }
+        const u = I.url || I.base64, S = await T.fromURL(u);
+        S.set({
+          left: m,
+          top: C,
+          angle: g.angle || 0,
+          scaleX: b,
+          scaleY: E,
+          originX: "center",
+          originY: "center",
+          imageId: f,
+          cornerSize: 10,
+          transparentCorners: !1
+        }), g.is_grayscale && (S.filters.push(new H.Grayscale()), S.applyFilters()), this.setupCustomControls(S), this.canvas.add(S), this.updateSidebarStatus(f, !0);
       } else
-        console.warn(`Image ID ${c.imageId} not found in API. Skipping.`);
+        console.warn(`Image ID ${f} not found in API. Skipping.`);
     }
-    return this.canvas.requestRenderAll(), { success: !0, skipped: o };
+    return this.canvas.requestRenderAll(), { success: !0, skipped: r };
   }
   addPage() {
     this.pageCount++, this.setupLayout();
   }
   removePage() {
     if (this.pageCount > 1) {
-      const t = this.pageWidthPx, e = this.pageHeightPx, s = this.pageCount - 1;
-      let i, n, o, h;
+      const s = this.pageWidthPx, i = this.pageHeightPx, e = this.pageCount - 1;
+      let t, n, o, r;
       if (this.orientation === "portrait")
-        i = s * (t + this.gap), n = 0, o = t, h = e;
+        t = e * (s + this.gap), n = 0, o = s, r = i;
       else {
-        const l = e, r = t;
-        i = 0, n = s * (r + this.gap), o = l, h = r;
+        const l = i, c = s;
+        t = 0, n = e * (c + this.gap), o = l, r = c;
       }
-      const d = this.canvas.getObjects().filter((l) => !l.isBackground), c = [];
+      const d = this.canvas.getObjects().filter((l) => !l.isBackground), h = [];
       d.forEach((l) => {
-        const r = l.getCenterPoint();
-        r.x >= i && r.x <= i + o && r.y >= n && r.y <= n + h && c.push(l);
-      }), c.forEach((l) => {
+        const c = l.getCenterPoint();
+        c.x >= t && c.x <= t + o && c.y >= n && c.y <= n + r && h.push(l);
+      }), h.forEach((l) => {
         l.imageId && this.updateSidebarStatus(l.imageId, !1), this.canvas.remove(l);
       }), this.pageCount--, this.setupLayout();
     }
   }
   enforceUniqueness() {
     if (!this.config.uniqueImages) return;
-    const t = this.canvas.getObjects().filter((i) => !i.isBackground), e = /* @__PURE__ */ new Set(), s = [];
-    return t.forEach((i) => {
-      i.imageId && (e.has(i.imageId) ? s.push(i) : e.add(i.imageId));
-    }), s.forEach((i) => {
-      this.canvas.remove(i);
-    }), this.canvas.requestRenderAll(), s.length;
+    const s = this.canvas.getObjects().filter((t) => !t.isBackground), i = /* @__PURE__ */ new Set(), e = [];
+    return s.forEach((t) => {
+      t.imageId && (i.has(t.imageId) ? e.push(t) : i.add(t.imageId));
+    }), e.forEach((t) => {
+      this.canvas.remove(t);
+    }), this.canvas.requestRenderAll(), e.length;
   }
   cleanupOutOfBounds() {
-    const t = this.canvas.getObjects().filter((i) => !i.isBackground), e = this.canvas.getWidth(), s = this.canvas.getHeight();
-    t.forEach((i) => {
-      const n = i.getCenterPoint();
-      (n.x < -50 || n.x > e + 50 || n.y < -50 || n.y > s + 50) && (this.canvas.remove(i), i.imageId && this.updateSidebarStatus(i.imageId, !1));
+    const s = this.canvas.getObjects().filter((t) => !t.isBackground), i = this.canvas.getWidth(), e = this.canvas.getHeight();
+    s.forEach((t) => {
+      const n = t.getCenterPoint();
+      (n.x < -50 || n.x > i + 50 || n.y < -50 || n.y > e + 50) && (this.canvas.remove(t), t.imageId && this.updateSidebarStatus(t.imageId, !1));
     }), this.canvas.requestRenderAll();
   }
   clearCanvas() {
-    this.canvas.getObjects().filter((e) => !e.isBackground).forEach((e) => {
-      this.canvas.remove(e), e.imageId && this.updateSidebarStatus(e.imageId, !1);
+    this.canvas.getObjects().filter((i) => !i.isBackground).forEach((i) => {
+      this.canvas.remove(i), i.imageId && this.updateSidebarStatus(i.imageId, !1);
     }), this.canvas.requestRenderAll();
   }
   destroy() {
@@ -472,5 +540,5 @@ class _ {
   }
 }
 export {
-  _ as FabricA4Layout
+  F as FabricA4Layout
 };

@@ -123,6 +123,7 @@ await layout.init();
 | `apiEndpoint` | String | `required` | 取得圖片列表的 API URL (GET)。 |
 | `saveEndpoint`| String | `null` | (選填) 儲存佈局的後端 API URL (POST)。 |
 | `dpi` | Number | `48` | 版面解析度，影響像素換算 (範圍 24-192)。 |
+| `pageMargin` | Number | `5` | 頁面出血/安全邊距 (mm)。<br>換算公式: `Math.round((mm / 25.4) * dpi)` |
 | `orientation` | String | `'portrait'` | 初始方向 `'portrait'` (直) 或 `'landscape'` (橫)。 |
 | `uniqueImages` | Boolean | `false` | 若為 `true`，同一張圖片僅能被加入畫布一次。 |
 | `defaultGrayscale` | Boolean | `false` | 若為 `true`，新加入的圖片自動套用灰階濾鏡。 |
@@ -192,6 +193,7 @@ buttons: {
     "dpi": 48,
     "width": 397,
     "height": 561,
+    "margin": 5,
     "pages": 1
   },
   "items": [
@@ -201,15 +203,16 @@ buttons: {
       "page_num": 1,
       "img_setting": {
         "is_grayscale": false,
-        "now_width": 100,
-        "now_height": 80,
-        "left": 10.5,
-        "top": 20.0,
+        "type": "image",
+        "left": 150.5,
+        "top": 300.0,
         "angle": 0,
         "scaleX": 0.2,
         "scaleY": 0.2,
         "width": 500,
-        "height": 400
+        "height": 400,
+        "originX": "center",
+        "originY": "center"
       }
     }
   ]
