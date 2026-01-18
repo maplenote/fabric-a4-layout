@@ -102,6 +102,18 @@
               />
             </label>
             <label>
+              出血/邊距 (mm):
+              <input
+                type="number"
+                id="inp-margin"
+                value="5"
+                min="0"
+                max="50"
+                style="width: 80px"
+              />
+              <span id="lbl-margin-px" style="display: block; font-size: 11px; color: #888; margin-top: 2px;">(換算: - px)</span>
+            </label>
+            <label>
               預設方向:
               <select id="inp-orientation" style="padding: 2px">
                 <option value="portrait">直式 (Portrait)</option>
@@ -236,6 +248,7 @@
           apiEndpoint: "./public/api/images.json",
           // saveEndpoint: '/api/save',
           uniqueImages: false,
+          pageMargin: 5,
           dpi: 48,
           data: { page_pk: "123", user_note: "Demo Note" },
         };
@@ -246,20 +259,32 @@
         const dialog = document.getElementById("settings-dialog");
         const inpDpi = document.getElementById("inp-dpi");
         const inpPx = document.getElementById("inp-px");
+        const inpMargin = document.getElementById("inp-margin");
+        const lblMarginPx = document.getElementById("lbl-margin-px");
         const inpUnique = document.getElementById("inp-unique");
         const inpGrayscale = document.getElementById("inp-grayscale");
         const inpOrientation = document.getElementById("inp-orientation");
         const inpData = document.getElementById("inp-data");
         const mmShort = 210;
 
+        const updateMarginPxDisplay = () => {
+            const dpi = parseInt(inpDpi.value) || 0;
+            const mm = parseFloat(inpMargin.value) || 0;
+            const px = Math.round((mm / 25.4) * dpi);
+            lblMarginPx.innerText = `(換算: ${px} px)`;
+        };
+
         inpDpi.oninput = () => {
           const dpi = parseInt(inpDpi.value) || 0;
           if (dpi > 0) inpPx.value = Math.round((mmShort / 25.4) * dpi);
+          updateMarginPxDisplay();
         };
         inpPx.oninput = () => {
           const px = parseInt(inpPx.value) || 0;
           if (px > 0) inpDpi.value = Math.round((px * 25.4) / mmShort);
+          updateMarginPxDisplay();
         };
+        inpMargin.oninput = updateMarginPxDisplay;
 
         document.getElementById("btn-cancel-settings").onclick = () =>
           dialog.close();
@@ -267,6 +292,7 @@
         document.getElementById("btn-settings").onclick = () => {
           // Load current values
           inpDpi.value = window.layout.config.dpi;
+          inpMargin.value = window.layout.config.pageMargin || 5;
           inpUnique.checked = window.layout.config.uniqueImages;
           inpGrayscale.checked = window.layout.config.defaultGrayscale;
           // Use current actual orientation
@@ -279,14 +305,18 @@
           );
 
           inpDpi.dispatchEvent(new Event("input")); // trigger sync
+          updateMarginPxDisplay();
           dialog.showModal();
         };
 
         document.getElementById("btn-apply-settings").onclick = async () => {
           const newDpi = parseInt(inpDpi.value) || 48;
+          const newMargin = parseFloat(inpMargin.value) || 0;
           const newUnique = inpUnique.checked;
           const newGrayscale = inpGrayscale.checked;
           const newOrientation = inpOrientation.value;
+
+          const marginPx = Math.round((newMargin / 25.4) * newDpi);
 
           let newData = {};
           try {
@@ -302,6 +332,7 @@
           currentConfig = {
             ...currentConfig,
             dpi: newDpi,
+            pageMargin: newMargin,
             uniqueImages: newUnique,
             defaultGrayscale: newGrayscale,
             orientation: newOrientation,
@@ -311,7 +342,7 @@
           // Re-init
           await createLayout(currentConfig);
           alert(
-            `A4已重置！\nDPI: ${newDpi}\n方向: ${newOrientation}\n不重複限制: ${
+            `A4已重置！\nDPI: ${newDpi}\n出血: ${newMargin}mm (約 ${marginPx}px)\n方向: ${newOrientation}\n不重複限制: ${
               newUnique ? "開啟" : "關閉"
             }\n預設灰階: ${newGrayscale ? "開啟" : "關閉"}`
           );

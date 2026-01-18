@@ -184,6 +184,7 @@ export class FabricA4Layout {
             dpi: 48,
             width: 210, // mm
             height: 297, // mm
+            pageMargin: 5, // mm (Default 5mm margin/bleed)
             orientation: 'portrait',
             saveWithBase64: false,
             uniqueImages: false,
@@ -210,6 +211,7 @@ export class FabricA4Layout {
         const mmToPx = (mm) => Math.round((mm / 25.4) * this.config.dpi);
         this.pageWidthPx = mmToPx(this.config.width);
         this.pageHeightPx = mmToPx(this.config.height);
+        this.pageMarginPx = mmToPx(this.config.pageMargin);
         this.gap = 4; // px
 
         this.canvasId = this.config.canvasId;
@@ -352,6 +354,7 @@ export class FabricA4Layout {
                 <strong>${this.t.status.pages}</strong> ${this.pageCount} | 
                 <strong>${this.t.status.orientation}</strong> ${dir} | 
                 <strong>${this.t.status.size}</strong> ${totalW} x ${totalH} px |
+                <strong>${this.t.status.margin}</strong> ${this.config.pageMargin} |
                 <strong>${this.t.status.grayscale}</strong> ${this.config.defaultGrayscale ? this.t.status.on : this.t.status.off}
             `;
             }
@@ -447,8 +450,8 @@ export class FabricA4Layout {
             imageId: imgId,
             cornerSize: 10,
             transparentCorners: false,
-            originX: 'left',
-            originY: 'top'
+            originX: 'center',
+            originY: 'center'
         });
 
         // Apply DPI Correction based on ORIGINAL dimensions from API
@@ -488,11 +491,15 @@ export class FabricA4Layout {
         const pageVisualW = isPortrait ? this.pageWidthPx : this.pageHeightPx;
         const pageVisualH = isPortrait ? this.pageHeightPx : this.pageWidthPx;
 
-        // Check against A4 page limits (Fit & Scale if too big)
+        // Define Safe Area (Effective Width/Height)
+        const effectiveW = pageVisualW - (this.pageMarginPx * 2);
+        const effectiveH = pageVisualH - (this.pageMarginPx * 2);
+
+        // Check against Safe Limits (Fit & Scale if too big)
         // Now getScaledWidth/Height reflects the "Original Physical Size" at current DPI
-        if (imgObj.getScaledWidth() > pageVisualW || imgObj.getScaledHeight() > pageVisualH) {
-            // Scale to fit then reduce to 95% to avoid bleeding edges
-            const fitScale = Math.min(pageVisualW / imgObj.getScaledWidth(), pageVisualH / imgObj.getScaledHeight()) * 0.95;
+        if (imgObj.getScaledWidth() > effectiveW || imgObj.getScaledHeight() > effectiveH) {
+            // Scale to fit safe area
+            const fitScale = Math.min(effectiveW / imgObj.getScaledWidth(), effectiveH / imgObj.getScaledHeight());
 
             // Apply the fit scale on top of the restored scale
             imgObj.scaleX *= fitScale;
@@ -522,8 +529,8 @@ export class FabricA4Layout {
         const pageObjects = getObjectsOnPage(targetPage);
         let startY = 0; // Relative Y on the page
 
-        // Define a safe top margin (2.5% of height, matching the 95% scale centering logic)
-        const topMargin = pageVisualH * 0.025;
+        // Define a safe top margin
+        const topMargin = this.pageMarginPx;
 
         if (pageObjects.length > 0) {
             // Find the bottom-most point of existing objects
@@ -532,11 +539,13 @@ export class FabricA4Layout {
                 // Calculate relative bottom
                 let objBottomRel = 0;
                 if (isPortrait) {
-                    objBottomRel = o.top + o.getScaledHeight();
+                    // With center origin, top is center Y. Bottom is Top + Height/2
+                    objBottomRel = o.top + (o.getScaledHeight() / 2);
                 } else {
                     // In landscape, global Top includes page offsets
                     const pageOffset = targetPage * (pageVisualH + this.gap);
-                    objBottomRel = (o.top - pageOffset) + o.getScaledHeight();
+                    // Center Y - PageOffset + Height/2
+                    objBottomRel = (o.top - pageOffset) + (o.getScaledHeight() / 2);
                 }
                 if (objBottomRel > maxBottom) maxBottom = objBottomRel;
             });
@@ -546,7 +555,7 @@ export class FabricA4Layout {
         }
 
         // 3. Check Vertical Overflow
-        if (startY + imgObj.getScaledHeight() > pageVisualH) {
+        if (startY + imgObj.getScaledHeight() > pageVisualH - this.pageMarginPx) {
             // Doesn't fit on current page -> New Page
             this.addPage();
             targetPage++;
@@ -558,14 +567,21 @@ export class FabricA4Layout {
 
         if (isPortrait) {
             const pageOffset = targetPage * (pageVisualW + this.gap);
-            // Center horizontally
-            globalLeft = pageOffset + (pageVisualW - imgObj.getScaledWidth()) / 2;
-            globalTop = startY;
+            
+            // Left Align with Margin (Origin is Center)
+            // Center X = PageStart + Margin + (Width / 2)
+            globalLeft = pageOffset + this.pageMarginPx + (imgObj.getScaledWidth() / 2);
+            
+            // Global Top = startY (margin or bottom of prev) + Half Height
+            globalTop = startY + (imgObj.getScaledHeight() / 2);
         } else {
             const pageOffset = targetPage * (pageVisualH + this.gap);
-            // Center horizontally (visual width)
-            globalLeft = (pageVisualW - imgObj.getScaledWidth()) / 2;
-            globalTop = pageOffset + startY;
+            
+            // Left Align with Margin (Origin is Center)
+            // Center X = Margin + (Width / 2)
+            globalLeft = this.pageMarginPx + (imgObj.getScaledWidth() / 2);
+            
+            globalTop = pageOffset + startY + (imgObj.getScaledHeight() / 2);
         }
 
         imgObj.set({ left: globalLeft, top: globalTop });
@@ -728,26 +744,88 @@ export class FabricA4Layout {
     }
 
     save(extraParams = {}) {
-        const json = this.canvas.toObject(['imageId', 'id']);
+        const objects = this.canvas.getObjects().filter(o => !o.isBackground);
+        const items = [];
 
-        json.objects = json.objects.filter(o => !o.isBackground);
+        const pW = this.pageWidthPx;
+        const pH = this.pageHeightPx;
+        const gap = this.gap;
 
-        if (!this.config.saveWithBase64) {
-            json.objects.forEach(o => {
-                if (o.type === 'image') {
-                    delete o.src;
-                }
+        objects.forEach((obj, index) => {
+            const center = obj.getCenterPoint();
+            let pageNum = 1;
+            let relativeLeft = 0;
+            let relativeTop = 0;
+
+            if (this.orientation === 'portrait') {
+                // Portrait: Pages stacked horizontally
+                // Page Index = floor(Center X / (Width + Gap))
+                const pageIndex = Math.floor(center.x / (pW + gap));
+                pageNum = pageIndex + 1;
+                
+                // Relative Left = Center X - Page Start X
+                relativeLeft = center.x - (pageIndex * (pW + gap));
+                relativeTop = center.y;
+            } else {
+                // Landscape: Pages stacked vertically
+                // Visual Width is pH, Visual Height is pW (swapped dimensions in logic)
+                // But typically Landscape A4 means the paper is rotated. 
+                // In this implementation:
+                // Portrait: W=210mm, H=297mm.
+                // Landscape: W=297mm, H=210mm.
+                // The canvas is resizing based on orientation.
+                
+                // Let's check setupLayout():
+                // Portrait: canvas width = (w + gap) * count.
+                // Landscape: canvas height = (h + gap) * count.
+                
+                // In Landscape mode:
+                // Width = pH (297mm equivalent px)
+                // Height = pW (210mm equivalent px)
+                const visualW = pH; 
+                const visualH = pW;
+
+                const pageIndex = Math.floor(center.y / (visualH + gap));
+                pageNum = pageIndex + 1;
+
+                relativeLeft = center.x;
+                relativeTop = center.y - (pageIndex * (visualH + gap));
+            }
+
+            // Construct img_setting
+            const imgSetting = {
+                type: 'image',
+                originX: 'center',
+                originY: 'center',
+                left: relativeLeft,
+                top: relativeTop,
+                angle: obj.angle || 0,
+                width: obj.width,
+                height: obj.height,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
+                is_grayscale: obj.filters.some(f => f.type === 'Grayscale')
+            };
+
+            items.push({
+                seq_no: index + 1,
+                img_id: obj.imageId,
+                page_num: pageNum,
+                img_setting: imgSetting
             });
-        }
+        });
 
         return {
-            version: '1.0',
-            timestamp: Date.now(),
-            orientation: this.orientation,
-            pageCount: this.pageCount,
-            dpi: this.config.dpi,
-            canvasObjects: json.objects,
-            data: { ...this.config.data, ...extraParams }
+            data: { ...this.config.data, ...extraParams },
+            page: {
+                orientation: this.orientation,
+                dpi: this.config.dpi,
+                width: this.orientation === 'portrait' ? pW : pH,
+                height: this.orientation === 'portrait' ? pH : pW,
+                margin: this.config.pageMargin,
+                pages: this.pageCount
+            },
+            items: items
         };
     }
 
@@ -793,24 +871,7 @@ export class FabricA4Layout {
                 return { success: false, message: inputData.error || 'Unknown error from API data' };
             }
             if (inputData.data) {
-                layoutData = inputData.data; // Unwrap
-                // Sometimes the data payload is nested inside another 'data' key for the Save payload specifically?
-                // Spec 4.1 says: { succ: true, data: { data: {...}, page: {...}, items: [...] } }
-                // But the 'save' method output format is flat: { version, orientation, pageCount, canvasObjects, data }.
-                // The 4.1 Save Layout Payload (Section 1.1) is DIFFERENT from what 'this.save()' returns?
-
-                // Let's re-read the saving logic. 
-                // 'save()' returns: { version, timestamp, orientation, pageCount, dpi, canvasObjects, data }
-                // 'API_SPEC.md' 1.1 says Payload matches: { data: {}, page: {}, items: [] }
-
-                // It seems 'save()' outputs an internal format, but the API SPEC describes a specific protocol format.
-                // A real backend integration would likely require mapping 'this.save()' output to the 'API SPEC' format.
-                // Or, the 'save()' method should be updated to match the spec.
-
-                // HOWEVER, for this specific request "Define API success flag", I should focus on the wrapping.
-                // If the user uses standard save(), they get the internal format. 
-                // If they load() that, it works.
-                // If they load() a response from backend, it might be wrapped.
+                layoutData = inputData.data;
             }
         }
 
@@ -818,53 +879,125 @@ export class FabricA4Layout {
 
         this.canvas.clear();
 
-        this.orientation = data.orientation || 'portrait';
-        this.pageCount = data.pageCount || 1;
+        this.orientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
+        this.pageCount = (data.page && data.page.pages) || data.pageCount || 1;
+        
+        // Update Margin from Load Data if present
+        if (data.page && typeof data.page.margin !== 'undefined') {
+            this.config.pageMargin = data.page.margin;
+        } else if (typeof data.margin !== 'undefined') {
+            this.config.pageMargin = data.margin;
+        }
+        // Recalculate Margin PX
+        const mmToPx = (mm) => Math.round((mm / 25.4) * this.config.dpi);
+        this.pageMarginPx = mmToPx(this.config.pageMargin);
+
         this.setupLayout();
 
-        const objects = data.canvasObjects || [];
+        // Support new 'items' format or fallback (though fallback is not strictly required by prompt, it's safer)
+        const items = data.items || [];
+        // If legacy format 'canvasObjects' exists and 'items' is empty, one might consider converting, 
+        // but the requirement is to Change Load Logic to Expect Center. Legacy format was Top-Left.
+        // So strictly following the new spec is better.
+
         const seenIds = new Set();
         const skippedItems = [];
 
-        const loadedDpi = data.dpi || this.config.dpi;
+        const loadedDpi = (data.page && data.page.dpi) || data.dpi || this.config.dpi;
         const scaleFactor = this.config.dpi / loadedDpi;
 
-        for (const objData of objects) {
-            if (this.config.uniqueImages && seenIds.has(objData.imageId)) {
-                const duplicateImg = this.images.find(i => i.img_id === objData.imageId);
-                const name = duplicateImg ? (duplicateImg.title || duplicateImg.img_id) : objData.imageId;
+        const pW = this.pageWidthPx;
+        const pH = this.pageHeightPx;
+        const gap = this.gap;
+
+        for (const item of items) {
+            const imgId = item.img_id;
+            const setting = item.img_setting || {};
+
+            if (this.config.uniqueImages && seenIds.has(imgId)) {
+                const duplicateImg = this.images.find(i => i.img_id === imgId);
+                const name = duplicateImg ? (duplicateImg.title || duplicateImg.img_id) : imgId;
                 skippedItems.push(name);
                 continue;
             }
 
-            const apiImg = this.images.find(i => i.img_id === objData.imageId);
+            const apiImg = this.images.find(i => i.img_id === imgId);
 
             if (apiImg) {
-                seenIds.add(objData.imageId);
+                seenIds.add(imgId);
 
-                const scaledData = { ...objData };
+                // Denormalize Coordinates (Relative -> Absolute)
+                const pageIndex = (item.page_num || 1) - 1;
+                let absLeft = 0;
+                let absTop = 0;
+
+                // setting.left/top are Centers relative to Page Top-Left
+                if (this.orientation === 'portrait') {
+                    absLeft = (setting.left || 0) + (pageIndex * (pW + gap));
+                    absTop = (setting.top || 0);
+                } else {
+                    const visualH = pW; // Height of landscape page (visually)
+                    absLeft = (setting.left || 0);
+                    absTop = (setting.top || 0) + (pageIndex * (visualH + gap));
+                }
+
+                // Apply Scale Factor if DPI changed
+                let finalScaleX = setting.scaleX || 1;
+                let finalScaleY = setting.scaleY || 1;
+
                 if (Math.abs(scaleFactor - 1) > 0.0001) {
-                    scaledData.left *= scaleFactor;
-                    scaledData.top *= scaleFactor;
-                    scaledData.scaleX = (scaledData.scaleX || 1) * scaleFactor;
-                    scaledData.scaleY = (scaledData.scaleY || 1) * scaleFactor;
+                    // Coordinates (Centers) scale directly
+                    // Note: If the page size scales, the offset calculation above assumes pW/pH are CURRENT config.
+                    // Ideally, we should scale the RELATIVE coord first, then add CURRENT offset.
+                    
+                    // Logic:
+                    // Rel_Cur = Rel_Saved * Scale
+                    // Abs_Cur = Rel_Cur + Offset_Cur
+                    
+                    // Re-calculate using scaling:
+                    const relLeftScaled = (setting.left || 0) * scaleFactor;
+                    const relTopScaled = (setting.top || 0) * scaleFactor;
+
+                    if (this.orientation === 'portrait') {
+                         absLeft = relLeftScaled + (pageIndex * (pW + gap));
+                         absTop = relTopScaled;
+                    } else {
+                         const visualH = pW;
+                         absLeft = relLeftScaled;
+                         absTop = relTopScaled + (pageIndex * (visualH + gap));
+                    }
+                    
+                    finalScaleX *= scaleFactor;
+                    finalScaleY *= scaleFactor;
                 }
 
                 const imgSrc = apiImg.url || apiImg.base64;
                 const imgObj = await FabricImage.fromURL(imgSrc);
-                imgObj.set(scaledData);
-                imgObj.set({ src: imgSrc });
 
-                if (objData.filters && objData.filters.length > 0) {
-                    imgObj.applyFilters();
+                imgObj.set({
+                    left: absLeft,
+                    top: absTop,
+                    angle: setting.angle || 0,
+                    scaleX: finalScaleX,
+                    scaleY: finalScaleY,
+                    originX: 'center',
+                    originY: 'center',
+                    imageId: imgId,
+                    cornerSize: 10,
+                    transparentCorners: false
+                });
+
+                if (setting.is_grayscale) {
+                     imgObj.filters.push(new filters.Grayscale());
+                     imgObj.applyFilters();
                 }
 
                 this.setupCustomControls(imgObj);
 
                 this.canvas.add(imgObj);
-                this.updateSidebarStatus(objData.imageId, true);
+                this.updateSidebarStatus(imgId, true);
             } else {
-                console.warn(`Image ID ${objData.imageId} not found in API. Skipping.`);
+                console.warn(`Image ID ${imgId} not found in API. Skipping.`);
             }
         }
 

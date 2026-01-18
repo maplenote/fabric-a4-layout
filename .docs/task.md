@@ -15,8 +15,9 @@
 ## Phase 3: 圖片管理 (Image Manager)
 - [x] 實作 `fetchImages()`: 支援 `API_SPEC.md` JSON 格式
 - [x] 實作 `renderSidebar()`: 圖片預覽、點擊加入/移除
-- [x] 實作 `addImageToCanvas()`: 固定 `left/top` 基準點
-- [x] **Feature**: 實作圖片自動縮放 (超過A4縮至95% Fit)
+- [x] **Refactor**: `addImageToCanvas()` 改用 Center Origin 並靠左對齊 (Left Align with Margin)
+- [x] **Feature**: 實作圖片自動縮放 (超過 Safe Area 自動縮放)
+- [x] **Feature**: 實作 `pageMargin` (出血) 設定與 UI 整合
 - [x] **Feature**: 實作預設灰階功能 (Default Grayscale)
 - [x] **Update**: 實作更新圖片列表與自動清理畫布外物件
 
@@ -30,11 +31,11 @@
 ## Phase 5: 旋轉與座標系統
 - [x] 實作 `toggleOrientation()` 方法
 - [x] **Algorithm**: 實作中心點映射旋轉演算法
-- [x] **Fix**: 強制 `originX: 'left', originY: 'top'` 定位邏輯
+- [x] **Refactor**: 座標系統重構為 `originX: 'center', originY: 'center'`
 
 ## Phase 6: 持久化與系統設定
-- [x] 實作 `save()` / `load()` (含重複檢查與顯示檔名)
-- [x] **Feature**: 實作「⚙️ 畫布設定」彈窗 (DPI/PX/不重複限制)
+- [x] 實作 `save()` / `load()` (含重複檢查、Center 座標轉換、Margin 存取)
+- [x] **Feature**: 實作「⚙️ 畫布設定」彈窗 (DPI/PX/Margin/不重複限制)
 - [x] 實作 `clearCanvas()` 清除所有圖片
 - [x] 實作 `destroy()` 資源回收機制
 
