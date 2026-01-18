@@ -230,6 +230,10 @@
 
       // --- Main Entry ---
       async function init() {
+        if (window.location.protocol === 'file:') {
+             alert('警告：您正在使用 "file://" 協定開啟此檔案。\n\n由於瀏覽器安全性限制 (CORS)，無法直接讀取本地 JSON 檔案。\n請使用 "Live Server" 或將專案部署至靜態網頁伺服器 (如 GitHub Pages) 以正常運作。');
+        }
+
         let currentConfig = {
           canvasId: "c",
           statusDisplayId: "status-display",
