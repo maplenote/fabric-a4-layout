@@ -244,7 +244,7 @@ export class FabricA4Layout {
         if (!this.canvas) return;
 
         ctx.save();
-        
+
         // Ensure we draw in the correct coordinate system (handle pan/zoom if any)
         const vpt = this.canvas.viewportTransform;
         ctx.transform(vpt[0], vpt[1], vpt[2], vpt[3], vpt[4], vpt[5]);
@@ -269,15 +269,17 @@ export class FabricA4Layout {
                 gh = pH;
             } else {
                 // Landscape
+                const visualW = pH;
+                const visualH = pW;
                 gx = 0;
-                gy = i * (pH + gap);
-                gw = pH; // Visual Width
-                gh = pW; // Visual Height
+                gy = i * (visualH + gap);
+                gw = visualW; // Visual Width
+                gh = visualH; // Visual Height
             }
 
             // Outer Rect (Page)
             ctx.rect(gx, gy, gw, gh);
-            
+
             // Inner Rect (Safe Area)
             ctx.rect(gx + m, gy + m, gw - 2 * m, gh - 2 * m);
         }
@@ -619,20 +621,20 @@ export class FabricA4Layout {
 
         if (isPortrait) {
             const pageOffset = targetPage * (pageVisualW + this.gap);
-            
+
             // Left Align with Margin (Origin is Center)
             // Center X = PageStart + Margin + (Width / 2)
             globalLeft = pageOffset + this.pageMarginPx + (imgObj.getScaledWidth() / 2);
-            
+
             // Global Top = startY (margin or bottom of prev) + Half Height
             globalTop = startY + (imgObj.getScaledHeight() / 2);
         } else {
             const pageOffset = targetPage * (pageVisualH + this.gap);
-            
+
             // Left Align with Margin (Origin is Center)
             // Center X = Margin + (Width / 2)
             globalLeft = this.pageMarginPx + (imgObj.getScaledWidth() / 2);
-            
+
             globalTop = pageOffset + startY + (imgObj.getScaledHeight() / 2);
         }
 
@@ -814,7 +816,7 @@ export class FabricA4Layout {
                 // Page Index = floor(Center X / (Width + Gap))
                 const pageIndex = Math.floor(center.x / (pW + gap));
                 pageNum = pageIndex + 1;
-                
+
                 // Relative Left = Center X - Page Start X
                 relativeLeft = center.x - (pageIndex * (pW + gap));
                 relativeTop = center.y;
@@ -826,15 +828,15 @@ export class FabricA4Layout {
                 // Portrait: W=210mm, H=297mm.
                 // Landscape: W=297mm, H=210mm.
                 // The canvas is resizing based on orientation.
-                
+
                 // Let's check setupLayout():
                 // Portrait: canvas width = (w + gap) * count.
                 // Landscape: canvas height = (h + gap) * count.
-                
+
                 // In Landscape mode:
                 // Width = pH (297mm equivalent px)
                 // Height = pW (210mm equivalent px)
-                const visualW = pH; 
+                const visualW = pH;
                 const visualH = pW;
 
                 const pageIndex = Math.floor(center.y / (visualH + gap));
@@ -933,7 +935,7 @@ export class FabricA4Layout {
 
         this.orientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
         this.pageCount = (data.page && data.page.pages) || data.pageCount || 1;
-        
+
         // Update Margin from Load Data if present
         if (data.page && typeof data.page.margin !== 'undefined') {
             this.config.pageMargin = data.page.margin;
@@ -1001,24 +1003,24 @@ export class FabricA4Layout {
                     // Coordinates (Centers) scale directly
                     // Note: If the page size scales, the offset calculation above assumes pW/pH are CURRENT config.
                     // Ideally, we should scale the RELATIVE coord first, then add CURRENT offset.
-                    
+
                     // Logic:
                     // Rel_Cur = Rel_Saved * Scale
                     // Abs_Cur = Rel_Cur + Offset_Cur
-                    
+
                     // Re-calculate using scaling:
                     const relLeftScaled = (setting.left || 0) * scaleFactor;
                     const relTopScaled = (setting.top || 0) * scaleFactor;
 
                     if (this.orientation === 'portrait') {
-                         absLeft = relLeftScaled + (pageIndex * (pW + gap));
-                         absTop = relTopScaled;
+                        absLeft = relLeftScaled + (pageIndex * (pW + gap));
+                        absTop = relTopScaled;
                     } else {
-                         const visualH = pW;
-                         absLeft = relLeftScaled;
-                         absTop = relTopScaled + (pageIndex * (visualH + gap));
+                        const visualH = pW;
+                        absLeft = relLeftScaled;
+                        absTop = relTopScaled + (pageIndex * (visualH + gap));
                     }
-                    
+
                     finalScaleX *= scaleFactor;
                     finalScaleY *= scaleFactor;
                 }
@@ -1040,8 +1042,8 @@ export class FabricA4Layout {
                 });
 
                 if (setting.is_grayscale) {
-                     imgObj.filters.push(new filters.Grayscale());
-                     imgObj.applyFilters();
+                    imgObj.filters.push(new filters.Grayscale());
+                    imgObj.applyFilters();
                 }
 
                 this.setupCustomControls(imgObj);

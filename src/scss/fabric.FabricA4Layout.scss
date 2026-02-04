@@ -81,7 +81,7 @@ $item-border: #ddd;
     background: $bg-color;
     overflow: auto; /* Enable native scrolling for the canvas */
     display: flex;
-    justify-content: center; /* Center canvas initially if smaller than viewport */
+    justify-content: flex-start; /* Keep left edge visible for horizontal scroll */
     align-items: flex-start;
     padding: 20px;
     
