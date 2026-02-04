@@ -125,7 +125,13 @@ class F {
     s.fillStyle = "rgba(189, 189, 255, 0.2)", s.beginPath();
     for (let r = 0; r < this.pageCount; r++) {
       let d, h, l, c;
-      this.orientation === "portrait" ? (d = r * (t + o), h = 0, l = t, c = n) : (d = 0, h = r * (n + o), l = n, c = t), s.rect(d, h, l, c), s.rect(d + e, h + e, l - 2 * e, c - 2 * e);
+      if (this.orientation === "portrait")
+        d = r * (t + o), h = 0, l = t, c = n;
+      else {
+        const p = n, f = t;
+        d = 0, h = r * (f + o), l = p, c = f;
+      }
+      s.rect(d, h, l, c), s.rect(d + e, h + e, l - 2 * e, c - 2 * e);
     }
     s.fill("evenodd"), s.restore();
   }
