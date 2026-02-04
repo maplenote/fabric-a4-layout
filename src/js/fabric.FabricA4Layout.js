@@ -220,6 +220,8 @@ export class FabricA4Layout {
         this.pageCount = 1;
 
         this.orientation = this.config.orientation;
+        this._layoutPending = false;
+        this._layoutPromise = null;
     }
 
     async init() {
@@ -290,6 +292,25 @@ export class FabricA4Layout {
         ctx.restore();
     }
 
+    _beginLayoutCycle() {
+        if (!this.canvas) return;
+
+        this._layoutPending = true;
+        this._layoutPromise = new Promise((resolve) => {
+            const handler = () => {
+                this.canvas.off('after:render', handler);
+                this._layoutPending = false;
+                resolve();
+            };
+            this.canvas.on('after:render', handler);
+        });
+    }
+
+    _waitForLayout() {
+        if (!this._layoutPending || !this._layoutPromise) return Promise.resolve();
+        return this._layoutPromise;
+    }
+
     bindControls() {
         const btns = this.config.buttons;
 
@@ -320,6 +341,7 @@ export class FabricA4Layout {
         });
 
         bind(btns.refreshImages, async () => {
+            await this._waitForLayout();
             this.cleanupOutOfBounds();
             await this.fetchImages();
             this.showError(this.t.error.listUpdated, true);
@@ -729,6 +751,7 @@ export class FabricA4Layout {
         }
 
         this.canvas.calcOffset();
+        this._beginLayoutCycle();
         this.canvas.requestRenderAll();
     }
 
@@ -1088,6 +1111,7 @@ export class FabricA4Layout {
 
             const objects = this.canvas.getObjects().filter(obj => !obj.isBackground);
             const objectsToRemove = [];
+            const removedImageIds = new Set();
 
             objects.forEach(obj => {
                 const center = obj.getCenterPoint();
@@ -1099,14 +1123,16 @@ export class FabricA4Layout {
             });
 
             objectsToRemove.forEach(obj => {
-                if (obj.imageId) {
-                    this.updateSidebarStatus(obj.imageId, false);
-                }
+                if (obj.imageId) removedImageIds.add(obj.imageId);
                 this.canvas.remove(obj);
             });
 
             this.pageCount--;
             this.setupLayout();
+
+            if (removedImageIds.size > 0) {
+                this.updateSidebarStatus(null, false);
+            }
         }
     }
 
