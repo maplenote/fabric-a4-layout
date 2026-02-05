@@ -115,6 +115,7 @@ const grayscaleControl = new Control({
             target.applyFilters();
             canvas.setCursor('default');
             canvas.requestRenderAll();
+            canvas.fire('object:modified', { target });
         }, 50);
 
         return true;
@@ -170,6 +171,7 @@ const rotate90Control = new Control({
 
         target.setCoords();
         canvas.requestRenderAll();
+        canvas.fire('object:modified', { target });
         return true;
     },
     render: renderRotateIcon
@@ -191,12 +193,25 @@ export class FabricA4Layout {
             defaultGrayscale: false,
             saveEndpoint: null,
             data: {},
+            warnOnUnsavedClose: true,
             buttons: {}, // Map of action -> buttonId
             statusDisplayId: null,
             errorDisplayId: null,
             locale: {},
+            onDirtyChange: null,
             ...config
         };
+
+        // Backward compatibility:
+        // Historically used `unsavedWarning` (string) to control close-warning.
+        // Modern browsers usually ignore custom text, so we now use a boolean flag.
+        if (typeof this.config.warnOnUnsavedClose !== 'boolean') {
+            if (typeof this.config.unsavedWarning === 'string') {
+                this.config.warnOnUnsavedClose = this.config.unsavedWarning.trim().length > 0;
+            } else {
+                this.config.warnOnUnsavedClose = false;
+            }
+        }
 
         // Merge Locale
         this.t = {
@@ -222,6 +237,8 @@ export class FabricA4Layout {
         this.orientation = this._normalizeOrientation(this.config.orientation);
         this._layoutPending = false;
         this._layoutPromise = null;
+        this._dirty = false;
+        this._suppressDirty = 0;
     }
 
     _normalizeOrientation(value) {
@@ -250,6 +267,48 @@ export class FabricA4Layout {
         // Render Bleed Overlay (Always on top)
         this.canvas.on('after:render', (opt) => this._renderBleedOverlay(opt.ctx));
         this.canvas.requestRenderAll();
+    }
+
+    isDirty() {
+        return this._dirty;
+    }
+
+    markSaved() {
+        this._setDirty(false, 'markSaved');
+    }
+
+    markDirty(source = 'manual') {
+        this._setDirty(true, source);
+    }
+
+    _setDirty(flag, source) {
+        if (this._suppressDirty > 0) return;
+        const next = !!flag;
+        if (this._dirty === next) return;
+        this._dirty = next;
+        if (typeof this.config.onDirtyChange === 'function') {
+            this.config.onDirtyChange(this._dirty, source || 'unknown');
+        }
+    }
+
+    _withDirtySuppressed(fn) {
+        this._suppressDirty++;
+        let result;
+        try {
+            result = fn();
+        } catch (error) {
+            this._suppressDirty = Math.max(0, this._suppressDirty - 1);
+            throw error;
+        }
+
+        if (result && typeof result.then === 'function') {
+            return result.finally(() => {
+                this._suppressDirty = Math.max(0, this._suppressDirty - 1);
+            });
+        }
+
+        this._suppressDirty = Math.max(0, this._suppressDirty - 1);
+        return result;
     }
 
     _renderBleedOverlay(ctx) {
@@ -690,79 +749,81 @@ export class FabricA4Layout {
     }
 
     setupLayout() {
-        let totalW, totalH;
+        return this._withDirtySuppressed(() => {
+            let totalW, totalH;
 
-        const bgObjects = this.canvas.getObjects().filter(o => o.isBackground);
-        this.canvas.remove(...bgObjects);
+            const bgObjects = this.canvas.getObjects().filter(o => o.isBackground);
+            this.canvas.remove(...bgObjects);
 
-        if (this.orientation === 'portrait') {
-            const w = this.pageWidthPx;
-            const h = this.pageHeightPx;
+            if (this.orientation === 'portrait') {
+                const w = this.pageWidthPx;
+                const h = this.pageHeightPx;
 
-            totalH = h;
-            totalW = (w + this.gap) * this.pageCount - this.gap;
+                totalH = h;
+                totalW = (w + this.gap) * this.pageCount - this.gap;
 
-            this.canvas.setDimensions(
-                { width: totalW, height: totalH },
-                { cssOnly: false, backstoreOnly: false }
-            );
+                this.canvas.setDimensions(
+                    { width: totalW, height: totalH },
+                    { cssOnly: false, backstoreOnly: false }
+                );
 
-            for (let i = 0; i < this.pageCount; i++) {
-                const bgRect = new Rect({
-                    left: i * (w + this.gap),
-                    top: 0,
-                    width: w,
-                    height: h,
-                    fill: 'white',
-                    stroke: '#999',
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false,
-                    isBackground: true,
-                    hoverCursor: 'default',
-                    originX: 'left',
-                    originY: 'top'
-                });
-                this.canvas.add(bgRect);
-                this.canvas.sendObjectToBack(bgRect);
+                for (let i = 0; i < this.pageCount; i++) {
+                    const bgRect = new Rect({
+                        left: i * (w + this.gap),
+                        top: 0,
+                        width: w,
+                        height: h,
+                        fill: 'white',
+                        stroke: '#999',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false,
+                        isBackground: true,
+                        hoverCursor: 'default',
+                        originX: 'left',
+                        originY: 'top'
+                    });
+                    this.canvas.add(bgRect);
+                    this.canvas.sendObjectToBack(bgRect);
+                }
+
+            } else {
+                const w = this.pageHeightPx;
+                const h = this.pageWidthPx;
+
+                totalW = w;
+                totalH = (h + this.gap) * this.pageCount - this.gap;
+
+                this.canvas.setDimensions(
+                    { width: totalW, height: totalH },
+                    { cssOnly: false, backstoreOnly: false }
+                );
+
+                for (let i = 0; i < this.pageCount; i++) {
+                    const bgRect = new Rect({
+                        left: 0,
+                        top: i * (h + this.gap),
+                        width: w,
+                        height: h,
+                        fill: 'white',
+                        stroke: '#999',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false,
+                        isBackground: true,
+                        hoverCursor: 'default',
+                        originX: 'left',
+                        originY: 'top'
+                    });
+                    this.canvas.add(bgRect);
+                    this.canvas.sendObjectToBack(bgRect);
+                }
             }
 
-        } else {
-            const w = this.pageHeightPx;
-            const h = this.pageWidthPx;
-
-            totalW = w;
-            totalH = (h + this.gap) * this.pageCount - this.gap;
-
-            this.canvas.setDimensions(
-                { width: totalW, height: totalH },
-                { cssOnly: false, backstoreOnly: false }
-            );
-
-            for (let i = 0; i < this.pageCount; i++) {
-                const bgRect = new Rect({
-                    left: 0,
-                    top: i * (h + this.gap),
-                    width: w,
-                    height: h,
-                    fill: 'white',
-                    stroke: '#999',
-                    strokeWidth: 1,
-                    selectable: false,
-                    evented: false,
-                    isBackground: true,
-                    hoverCursor: 'default',
-                    originX: 'left',
-                    originY: 'top'
-                });
-                this.canvas.add(bgRect);
-                this.canvas.sendObjectToBack(bgRect);
-            }
-        }
-
-        this.canvas.calcOffset();
-        this._beginLayoutCycle();
-        this.canvas.requestRenderAll();
+            this.canvas.calcOffset();
+            this._beginLayoutCycle();
+            this.canvas.requestRenderAll();
+        });
     }
 
     toggleOrientation() {
@@ -820,12 +881,31 @@ export class FabricA4Layout {
         });
 
         this.setupLayout();
+        this._setDirty(true, 'toggleOrientation');
     }
 
     setupEvents() {
         this.canvas.on('object:custom:delete', (e) => {
             if (e.target && e.target.imageId) {
                 this.updateSidebarStatus(e.target.imageId, false);
+            }
+        });
+
+        this.canvas.on('object:added', (e) => {
+            if (e.target && !e.target.isBackground) {
+                this._setDirty(true, 'object:added');
+            }
+        });
+
+        this.canvas.on('object:modified', (e) => {
+            if (e.target && !e.target.isBackground) {
+                this._setDirty(true, 'object:modified');
+            }
+        });
+
+        this.canvas.on('object:removed', (e) => {
+            if (e.target && !e.target.isBackground) {
+                this._setDirty(true, 'object:removed');
             }
         });
     }
@@ -952,152 +1032,158 @@ export class FabricA4Layout {
 
     async load(inputData) {
         if (!inputData) return { success: false, message: 'No data' };
-
-        // Standard API Response Handling (Unwrap if needed)
-        let layoutData = inputData;
-        if ('succ' in inputData) {
-            if (inputData.succ === false) {
-                return { success: false, message: inputData.error || 'Unknown error from API data' };
-            }
-            if (inputData.data) {
-                layoutData = inputData.data;
-            }
-        }
-
-        const data = layoutData;
-
-        this.canvas.clear();
-
-        const rawOrientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
-        this.orientation = this._normalizeOrientation(rawOrientation);
-        this.pageCount = (data.page && data.page.pages) || data.pageCount || 1;
-
-        // Update Margin from Load Data if present
-        if (data.page && typeof data.page.margin !== 'undefined') {
-            this.config.pageMargin = data.page.margin;
-        } else if (typeof data.margin !== 'undefined') {
-            this.config.pageMargin = data.margin;
-        }
-        // Recalculate Margin PX
-        const mmToPx = (mm) => Math.round((mm / 25.4) * this.config.dpi);
-        this.pageMarginPx = mmToPx(this.config.pageMargin);
-
-        this.setupLayout();
-
-        // Support new 'items' format or fallback (though fallback is not strictly required by prompt, it's safer)
-        const items = data.items || [];
-        // If legacy format 'canvasObjects' exists and 'items' is empty, one might consider converting, 
-        // but the requirement is to Change Load Logic to Expect Center. Legacy format was Top-Left.
-        // So strictly following the new spec is better.
-
-        const seenIds = new Set();
-        const skippedItems = [];
-
-        const loadedDpi = (data.page && data.page.dpi) || data.dpi || this.config.dpi;
-        const scaleFactor = this.config.dpi / loadedDpi;
-
-        const pW = this.pageWidthPx;
-        const pH = this.pageHeightPx;
-        const gap = this.gap;
-
-        for (const item of items) {
-            const imgId = item.img_id;
-            const setting = item.img_setting || {};
-
-            if (this.config.uniqueImages && seenIds.has(imgId)) {
-                const duplicateImg = this.images.find(i => i.img_id === imgId);
-                const name = duplicateImg ? (duplicateImg.title || duplicateImg.img_id) : imgId;
-                skippedItems.push(name);
-                continue;
+        const result = await this._withDirtySuppressed(async () => {
+            // Standard API Response Handling (Unwrap if needed)
+            let layoutData = inputData;
+            if ('succ' in inputData) {
+                if (inputData.succ === false) {
+                    return { success: false, message: inputData.error || 'Unknown error from API data' };
+                }
+                if (inputData.data) {
+                    layoutData = inputData.data;
+                }
             }
 
-            const apiImg = this.images.find(i => i.img_id === imgId);
+            const data = layoutData;
 
-            if (apiImg) {
-                seenIds.add(imgId);
+            this.canvas.clear();
 
-                // Denormalize Coordinates (Relative -> Absolute)
-                const pageIndex = (item.page_num || 1) - 1;
-                let absLeft = 0;
-                let absTop = 0;
+            const rawOrientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
+            this.orientation = this._normalizeOrientation(rawOrientation);
+            this.pageCount = (data.page && data.page.pages) || data.pageCount || 1;
 
-                // setting.left/top are Centers relative to Page Top-Left
-                if (this.orientation === 'portrait') {
-                    absLeft = (setting.left || 0) + (pageIndex * (pW + gap));
-                    absTop = (setting.top || 0);
-                } else {
-                    const visualH = pW; // Height of landscape page (visually)
-                    absLeft = (setting.left || 0);
-                    absTop = (setting.top || 0) + (pageIndex * (visualH + gap));
+            // Update Margin from Load Data if present
+            if (data.page && typeof data.page.margin !== 'undefined') {
+                this.config.pageMargin = data.page.margin;
+            } else if (typeof data.margin !== 'undefined') {
+                this.config.pageMargin = data.margin;
+            }
+            // Recalculate Margin PX
+            const mmToPx = (mm) => Math.round((mm / 25.4) * this.config.dpi);
+            this.pageMarginPx = mmToPx(this.config.pageMargin);
+
+            this.setupLayout();
+
+            // Support new 'items' format or fallback (though fallback is not strictly required by prompt, it's safer)
+            const items = data.items || [];
+            // If legacy format 'canvasObjects' exists and 'items' is empty, one might consider converting, 
+            // but the requirement is to Change Load Logic to Expect Center. Legacy format was Top-Left.
+            // So strictly following the new spec is better.
+
+            const seenIds = new Set();
+            const skippedItems = [];
+
+            const loadedDpi = (data.page && data.page.dpi) || data.dpi || this.config.dpi;
+            const scaleFactor = this.config.dpi / loadedDpi;
+
+            const pW = this.pageWidthPx;
+            const pH = this.pageHeightPx;
+            const gap = this.gap;
+
+            for (const item of items) {
+                const imgId = item.img_id;
+                const setting = item.img_setting || {};
+
+                if (this.config.uniqueImages && seenIds.has(imgId)) {
+                    const duplicateImg = this.images.find(i => i.img_id === imgId);
+                    const name = duplicateImg ? (duplicateImg.title || duplicateImg.img_id) : imgId;
+                    skippedItems.push(name);
+                    continue;
                 }
 
-                // Apply Scale Factor if DPI changed
-                let finalScaleX = setting.scaleX || 1;
-                let finalScaleY = setting.scaleY || 1;
+                const apiImg = this.images.find(i => i.img_id === imgId);
 
-                if (Math.abs(scaleFactor - 1) > 0.0001) {
-                    // Coordinates (Centers) scale directly
-                    // Note: If the page size scales, the offset calculation above assumes pW/pH are CURRENT config.
-                    // Ideally, we should scale the RELATIVE coord first, then add CURRENT offset.
+                if (apiImg) {
+                    seenIds.add(imgId);
 
-                    // Logic:
-                    // Rel_Cur = Rel_Saved * Scale
-                    // Abs_Cur = Rel_Cur + Offset_Cur
+                    // Denormalize Coordinates (Relative -> Absolute)
+                    const pageIndex = (item.page_num || 1) - 1;
+                    let absLeft = 0;
+                    let absTop = 0;
 
-                    // Re-calculate using scaling:
-                    const relLeftScaled = (setting.left || 0) * scaleFactor;
-                    const relTopScaled = (setting.top || 0) * scaleFactor;
-
+                    // setting.left/top are Centers relative to Page Top-Left
                     if (this.orientation === 'portrait') {
-                        absLeft = relLeftScaled + (pageIndex * (pW + gap));
-                        absTop = relTopScaled;
+                        absLeft = (setting.left || 0) + (pageIndex * (pW + gap));
+                        absTop = (setting.top || 0);
                     } else {
-                        const visualH = pW;
-                        absLeft = relLeftScaled;
-                        absTop = relTopScaled + (pageIndex * (visualH + gap));
+                        const visualH = pW; // Height of landscape page (visually)
+                        absLeft = (setting.left || 0);
+                        absTop = (setting.top || 0) + (pageIndex * (visualH + gap));
                     }
 
-                    finalScaleX *= scaleFactor;
-                    finalScaleY *= scaleFactor;
+                    // Apply Scale Factor if DPI changed
+                    let finalScaleX = setting.scaleX || 1;
+                    let finalScaleY = setting.scaleY || 1;
+
+                    if (Math.abs(scaleFactor - 1) > 0.0001) {
+                        // Coordinates (Centers) scale directly
+                        // Note: If the page size scales, the offset calculation above assumes pW/pH are CURRENT config.
+                        // Ideally, we should scale the RELATIVE coord first, then add CURRENT offset.
+
+                        // Logic:
+                        // Rel_Cur = Rel_Saved * Scale
+                        // Abs_Cur = Rel_Cur + Offset_Cur
+
+                        // Re-calculate using scaling:
+                        const relLeftScaled = (setting.left || 0) * scaleFactor;
+                        const relTopScaled = (setting.top || 0) * scaleFactor;
+
+                        if (this.orientation === 'portrait') {
+                            absLeft = relLeftScaled + (pageIndex * (pW + gap));
+                            absTop = relTopScaled;
+                        } else {
+                            const visualH = pW;
+                            absLeft = relLeftScaled;
+                            absTop = relTopScaled + (pageIndex * (visualH + gap));
+                        }
+
+                        finalScaleX *= scaleFactor;
+                        finalScaleY *= scaleFactor;
+                    }
+
+                    const imgSrc = apiImg.url || apiImg.base64;
+                    const imgObj = await FabricImage.fromURL(imgSrc);
+
+                    imgObj.set({
+                        left: absLeft,
+                        top: absTop,
+                        angle: setting.angle || 0,
+                        scaleX: finalScaleX,
+                        scaleY: finalScaleY,
+                        originX: 'center',
+                        originY: 'center',
+                        imageId: imgId,
+                        cornerSize: 10,
+                        transparentCorners: false
+                    });
+
+                    if (setting.is_grayscale) {
+                        imgObj.filters.push(new filters.Grayscale());
+                        imgObj.applyFilters();
+                    }
+
+                    this.setupCustomControls(imgObj);
+
+                    this.canvas.add(imgObj);
+                    this.updateSidebarStatus(imgId, true);
+                } else {
+                    console.warn(`Image ID ${imgId} not found in API. Skipping.`);
                 }
-
-                const imgSrc = apiImg.url || apiImg.base64;
-                const imgObj = await FabricImage.fromURL(imgSrc);
-
-                imgObj.set({
-                    left: absLeft,
-                    top: absTop,
-                    angle: setting.angle || 0,
-                    scaleX: finalScaleX,
-                    scaleY: finalScaleY,
-                    originX: 'center',
-                    originY: 'center',
-                    imageId: imgId,
-                    cornerSize: 10,
-                    transparentCorners: false
-                });
-
-                if (setting.is_grayscale) {
-                    imgObj.filters.push(new filters.Grayscale());
-                    imgObj.applyFilters();
-                }
-
-                this.setupCustomControls(imgObj);
-
-                this.canvas.add(imgObj);
-                this.updateSidebarStatus(imgId, true);
-            } else {
-                console.warn(`Image ID ${imgId} not found in API. Skipping.`);
             }
-        }
 
-        this.canvas.requestRenderAll();
-        return { success: true, skipped: skippedItems };
+            this.canvas.requestRenderAll();
+            return { success: true, skipped: skippedItems };
+        });
+        if (result && result.success !== false) {
+            this._setDirty(true, 'load');
+        }
+        return result;
     }
 
     addPage() {
         this.pageCount++;
         this.setupLayout();
+        this._setDirty(true, 'addPage');
     }
 
     removePage() {
@@ -1146,6 +1232,8 @@ export class FabricA4Layout {
             if (removedImageIds.size > 0) {
                 this.updateSidebarStatus(null, false);
             }
+
+            this._setDirty(true, 'removePage');
         }
     }
 
@@ -1190,6 +1278,7 @@ export class FabricA4Layout {
             }
         });
         this.canvas.requestRenderAll();
+        this._setDirty(true, 'cleanupOutOfBounds');
     }
 
     clearCanvas() {
@@ -1201,6 +1290,7 @@ export class FabricA4Layout {
             }
         });
         this.canvas.requestRenderAll();
+        this._setDirty(true, 'clearCanvas');
     }
 
     destroy() {
