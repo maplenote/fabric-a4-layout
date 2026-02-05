@@ -1,4 +1,4 @@
-import { Control as _, filters as H, util as z, Canvas as W, FabricImage as M, Rect as T, Point as B } from "fabric";
+import { Control as H, filters as _, util as z, Canvas as W, FabricImage as M, Rect as T, Point as B } from "fabric";
 const k = {
   status: {
     setting: "設定:",
@@ -29,7 +29,7 @@ const k = {
   }
 }, L = (a, t, i, e, s) => {
   a.save(), a.translate(t, i), a.rotate(z.degreesToRadians(s.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "#F44336", a.fill(), a.lineWidth = 2, a.strokeStyle = "white", a.beginPath(), a.moveTo(-24 / 4, -24 / 4), a.lineTo(24 / 4, 24 / 4), a.moveTo(24 / 4, -24 / 4), a.lineTo(-24 / 4, 24 / 4), a.stroke(), a.restore();
-}, A = new _({
+}, A = new H({
   x: 0.5,
   y: -0.5,
   // Top Right
@@ -45,7 +45,7 @@ const k = {
   render: L
 }), R = (a, t, i, e, s) => {
   a.save(), a.translate(t, i), a.rotate(z.degreesToRadians(s.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.beginPath(), a.arc(0, 0, 24 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.lineWidth = 1, a.strokeStyle = "#333", a.stroke(), a.beginPath(), a.arc(0, 0, 24 / 2, -Math.PI / 2, Math.PI / 2, !1), a.fillStyle = "black", a.fill(), a.restore();
-}, Y = new _({
+}, Y = new H({
   x: -0.5,
   y: 0.5,
   // Bottom Left
@@ -57,13 +57,13 @@ const k = {
   mouseUpHandler: (a, t) => {
     const i = t.target, e = i.canvas;
     return e.setCursor("wait"), setTimeout(() => {
-      i.filters.some((n) => n.type === "Grayscale") ? i.filters = i.filters.filter((n) => n.type !== "Grayscale") : i.filters.push(new H.Grayscale()), i.applyFilters(), e.setCursor("default"), e.requestRenderAll();
+      i.filters.some((n) => n.type === "Grayscale") ? i.filters = i.filters.filter((n) => n.type !== "Grayscale") : i.filters.push(new _.Grayscale()), i.applyFilters(), e.setCursor("default"), e.requestRenderAll();
     }, 50), !0;
   },
   render: R
 }), $ = (a, t, i, e, s) => {
   a.save(), a.translate(t, i), a.rotate(z.degreesToRadians(s.angle)), a.beginPath(), a.arc(0, 0, 28 / 2, 0, 2 * Math.PI, !1), a.fillStyle = "white", a.fill(), a.shadowColor = "rgba(0,0,0,0.2)", a.shadowBlur = 4, a.fill(), a.strokeStyle = "#2196F3", a.lineWidth = 2, a.beginPath(), a.arc(0, 0, 24 / 4, 0, Math.PI * 1.5, !1), a.stroke(), a.fillStyle = "#2196F3", a.beginPath(), a.moveTo(24 / 4, -24 / 8), a.lineTo(24 / 4 + 4, 0), a.lineTo(24 / 4 - 4, 0), a.fill(), a.restore();
-}, X = new _({
+}, X = new H({
   x: -0.5,
   y: -0.5,
   // Top Left
@@ -107,7 +107,11 @@ class F {
       confirm: { ...k.confirm, ...((n = this.config.locale) == null ? void 0 : n.confirm) || {} }
     }, this.config.dpi < 24 && (this.config.dpi = 24), this.config.dpi > 192 && (this.config.dpi = 192);
     const i = (o) => Math.round(o / 25.4 * this.config.dpi);
-    this.pageWidthPx = i(this.config.width), this.pageHeightPx = i(this.config.height), this.pageMarginPx = i(this.config.pageMargin), this.gap = 4, this.canvasId = this.config.canvasId, this.canvas = null, this.images = [], this.pageCount = 1, this.orientation = this.config.orientation, this._layoutPending = !1, this._layoutPromise = null;
+    this.pageWidthPx = i(this.config.width), this.pageHeightPx = i(this.config.height), this.pageMarginPx = i(this.config.pageMargin), this.gap = 4, this.canvasId = this.config.canvasId, this.canvas = null, this.images = [], this.pageCount = 1, this.orientation = this._normalizeOrientation(this.config.orientation), this._layoutPending = !1, this._layoutPromise = null;
+  }
+  _normalizeOrientation(t) {
+    const e = (t === null || typeof t > "u" ? "" : String(t).trim()).toLowerCase();
+    return e === "p" || e === "portrait" ? "portrait" : e === "l" || e === "landscape" ? "landscape" : "portrait";
   }
   async init() {
     this.canvas = new W(this.canvasId, {
@@ -123,15 +127,15 @@ class F {
     t.transform(i[0], i[1], i[2], i[3], i[4], i[5]);
     const e = this.pageMarginPx, s = this.pageWidthPx, n = this.pageHeightPx, o = this.gap;
     t.fillStyle = "rgba(189, 189, 255, 0.2)", t.beginPath();
-    for (let r = 0; r < this.pageCount; r++) {
-      let f, c, g, l;
+    for (let c = 0; c < this.pageCount; c++) {
+      let r, d, h, l;
       if (this.orientation === "portrait")
-        f = r * (s + o), c = 0, g = s, l = n;
+        r = c * (s + o), d = 0, h = s, l = n;
       else {
-        const d = n, p = s;
-        f = 0, c = r * (p + o), g = d, l = p;
+        const g = n, f = s;
+        r = 0, d = c * (f + o), h = g, l = f;
       }
-      t.rect(f, c, g, l), t.rect(f + e, c + e, g - 2 * e, l - 2 * e);
+      t.rect(r, d, h, l), t.rect(r + e, d + e, h - 2 * e, l - 2 * e);
     }
     t.fill("evenodd"), t.restore();
   }
@@ -242,7 +246,7 @@ class F {
       e.className = "image-item", e.dataset.id = i.img_id;
       const s = this.config.uniqueImages && this.isImageOnCanvas(i.img_id);
       e.onclick = () => {
-        s ? confirm(this.t.confirm.removeImage) && (this.canvas.getObjects().filter((f) => f.imageId === i.img_id).forEach((f) => this.canvas.remove(f)), this.updateSidebarStatus(i.img_id, !1), this.showError(this.t.error.removedFromCanvas, !0)) : this.addImageToCanvas(i.img_id);
+        s ? confirm(this.t.confirm.removeImage) && (this.canvas.getObjects().filter((r) => r.imageId === i.img_id).forEach((r) => this.canvas.remove(r)), this.updateSidebarStatus(i.img_id, !1), this.showError(this.t.error.removedFromCanvas, !0)) : this.addImageToCanvas(i.img_id);
       }, s && (e.classList.add("disabled"), e.title = "已在A4上 (點擊可移除)", e.style.cursor = "help");
       const n = document.createElement("img");
       n.src = i.url || i.base64, n.draggable = !1;
@@ -258,7 +262,7 @@ class F {
   }
   async addImageToCanvas(t) {
     if (this.config.uniqueImages && this.isImageOnCanvas(t)) return;
-    const i = this.images.find((u) => u.img_id === t);
+    const i = this.images.find((v) => v.img_id === t);
     if (!i) return;
     const e = i.url || i.base64, s = await M.fromURL(e);
     s.set({
@@ -269,49 +273,49 @@ class F {
       originY: "center"
     });
     const o = this.config.dpi / 96;
-    let r = 1, f = 1;
-    i.original_width && i.original_height && s.width > 0 && s.height > 0 ? (r = i.original_width / s.width * o, f = i.original_height / s.height * o) : (r = o, f = o), s.scaleX = r, s.scaleY = f, this.config.defaultGrayscale && (s.filters.push(new H.Grayscale()), s.applyFilters()), this.setupCustomControls(s);
-    const c = this.orientation === "portrait", g = c ? this.pageWidthPx : this.pageHeightPx, l = c ? this.pageHeightPx : this.pageWidthPx, d = g - this.pageMarginPx * 2, p = l - this.pageMarginPx * 2;
-    if (s.getScaledWidth() > d || s.getScaledHeight() > p) {
-      const u = Math.min(d / s.getScaledWidth(), p / s.getScaledHeight());
-      s.scaleX *= u, s.scaleY *= u;
+    let c = 1, r = 1;
+    i.original_width && i.original_height && s.width > 0 && s.height > 0 ? (c = i.original_width / s.width * o, r = i.original_height / s.height * o) : (c = o, r = o), s.scaleX = c, s.scaleY = r, this.config.defaultGrayscale && (s.filters.push(new _.Grayscale()), s.applyFilters()), this.setupCustomControls(s);
+    const d = this.orientation === "portrait", h = d ? this.pageWidthPx : this.pageHeightPx, l = d ? this.pageHeightPx : this.pageWidthPx, g = h - this.pageMarginPx * 2, f = l - this.pageMarginPx * 2;
+    if (s.getScaledWidth() > g || s.getScaledHeight() > f) {
+      const v = Math.min(g / s.getScaledWidth(), f / s.getScaledHeight());
+      s.scaleX *= v, s.scaleY *= v;
     }
-    let h = this.pageCount - 1;
-    const v = ((u) => this.canvas.getObjects().filter((y) => !y.isBackground).filter((y) => {
-      const w = y.getCenterPoint();
-      if (c) {
-        const I = u * (g + this.gap), O = I + g;
-        return w.x >= I && w.x < O;
+    let p = this.pageCount - 1;
+    const C = ((v) => this.canvas.getObjects().filter((y) => !y.isBackground).filter((y) => {
+      const S = y.getCenterPoint();
+      if (d) {
+        const I = v * (h + this.gap), E = I + h;
+        return S.x >= I && S.x < E;
       } else {
-        const I = u * (l + this.gap), O = I + l;
-        return w.y >= I && w.y < O;
+        const I = v * (l + this.gap), E = I + l;
+        return S.y >= I && S.y < E;
       }
-    }))(h);
+    }))(p);
     let m = 0;
     const P = this.pageMarginPx;
-    if (v.length > 0) {
-      let u = 0;
-      v.forEach((S) => {
+    if (C.length > 0) {
+      let v = 0;
+      C.forEach((b) => {
         let y = 0;
-        if (c)
-          y = S.top + S.getScaledHeight() / 2;
+        if (d)
+          y = b.top + b.getScaledHeight() / 2;
         else {
-          const w = h * (l + this.gap);
-          y = S.top - w + S.getScaledHeight() / 2;
+          const S = p * (l + this.gap);
+          y = b.top - S + b.getScaledHeight() / 2;
         }
-        y > u && (u = y);
-      }), m = u + this.gap;
+        y > v && (v = y);
+      }), m = v + this.gap;
     } else
       m = P;
-    m + s.getScaledHeight() > l - this.pageMarginPx && (this.addPage(), h++, m = P);
-    let b, E;
-    if (c)
-      b = h * (g + this.gap) + this.pageMarginPx + s.getScaledWidth() / 2, E = m + s.getScaledHeight() / 2;
+    m + s.getScaledHeight() > l - this.pageMarginPx && (this.addPage(), p++, m = P);
+    let w, O;
+    if (d)
+      w = p * (h + this.gap) + this.pageMarginPx + s.getScaledWidth() / 2, O = m + s.getScaledHeight() / 2;
     else {
-      const u = h * (l + this.gap);
-      b = this.pageMarginPx + s.getScaledWidth() / 2, E = u + m + s.getScaledHeight() / 2;
+      const v = p * (l + this.gap);
+      w = this.pageMarginPx + s.getScaledWidth() / 2, O = v + m + s.getScaledHeight() / 2;
     }
-    s.set({ left: b, top: E }), this.canvas.add(s), this.canvas.setActiveObject(s), this.updateSidebarStatus(t, !0);
+    s.set({ left: w, top: O }), this.canvas.add(s), this.canvas.setActiveObject(s), this.updateSidebarStatus(t, !0);
   }
   setupCustomControls(t) {
     delete t.controls.ml, delete t.controls.mr, delete t.controls.mt, delete t.controls.mb, delete t.controls.mtr, t.controls.deleteControl = A, t.controls.grayscaleControl = Y, t.controls.rotate90Control = X;
@@ -326,7 +330,7 @@ class F {
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const r = new T({
+        const c = new T({
           left: o * (s + this.gap),
           top: 0,
           width: s,
@@ -341,7 +345,7 @@ class F {
           originX: "left",
           originY: "top"
         });
-        this.canvas.add(r), this.canvas.sendObjectToBack(r);
+        this.canvas.add(c), this.canvas.sendObjectToBack(c);
       }
     } else {
       const s = this.pageHeightPx, n = this.pageWidthPx;
@@ -350,7 +354,7 @@ class F {
         { cssOnly: !1, backstoreOnly: !1 }
       );
       for (let o = 0; o < this.pageCount; o++) {
-        const r = new T({
+        const c = new T({
           left: 0,
           top: o * (n + this.gap),
           width: s,
@@ -365,7 +369,7 @@ class F {
           originX: "left",
           originY: "top"
         });
-        this.canvas.add(r), this.canvas.sendObjectToBack(r);
+        this.canvas.add(c), this.canvas.sendObjectToBack(c);
       }
     }
     this.canvas.calcOffset(), this._beginLayoutCycle(), this.canvas.requestRenderAll();
@@ -374,18 +378,18 @@ class F {
     const t = this.orientation;
     this.orientation = t === "portrait" ? "landscape" : "portrait", this.canvas.getObjects().filter((e) => !e.isBackground).forEach((e) => {
       const s = e.getCenterPoint();
-      let n = 0, o = 0, r = 0;
-      const f = this.pageWidthPx, c = this.pageHeightPx;
+      let n = 0, o = 0, c = 0;
+      const r = this.pageWidthPx, d = this.pageHeightPx;
       if (t === "portrait")
-        n = Math.floor(s.x / (f + this.gap)), o = s.x - n * (f + this.gap), r = s.y;
+        n = Math.floor(s.x / (r + this.gap)), o = s.x - n * (r + this.gap), c = s.y;
       else {
-        const h = f;
-        n = Math.floor(s.y / (h + this.gap)), o = s.x, r = s.y - n * (h + this.gap);
+        const p = r;
+        n = Math.floor(s.y / (p + this.gap)), o = s.x, c = s.y - n * (p + this.gap);
       }
-      let g, l;
-      t === "portrait" ? (g = c - r, l = o, e.angle = (e.angle || 0) + 90) : (g = r, l = c - o, e.angle = (e.angle || 0) - 90);
-      let d, p;
-      this.orientation === "portrait" ? (d = n * (f + this.gap) + g, p = l) : (d = g, p = n * (f + this.gap) + l), e.setPositionByOrigin(new B(d, p), "center", "center"), e.setCoords();
+      let h, l;
+      t === "portrait" ? (h = d - c, l = o, e.angle = (e.angle || 0) + 90) : (h = c, l = d - o, e.angle = (e.angle || 0) - 90);
+      let g, f;
+      this.orientation === "portrait" ? (g = n * (r + this.gap) + h, f = l) : (g = h, f = n * (r + this.gap) + l), e.setPositionByOrigin(new B(g, f), "center", "center"), e.setCoords();
     }), this.setupLayout();
   }
   setupEvents() {
@@ -394,34 +398,34 @@ class F {
     });
   }
   save(t = {}) {
-    const i = this.canvas.getObjects().filter((r) => !r.isBackground), e = [], s = this.pageWidthPx, n = this.pageHeightPx, o = this.gap;
-    return i.forEach((r, f) => {
-      const c = r.getCenterPoint();
-      let g = 1, l = 0, d = 0;
+    const i = this.canvas.getObjects().filter((r) => !r.isBackground), e = [], s = (r) => Math.round(r * 1e3) / 1e3, n = this.pageWidthPx, o = this.pageHeightPx, c = this.gap;
+    return i.forEach((r, d) => {
+      const h = r.getCenterPoint();
+      let l = 1, g = 0, f = 0;
       if (this.orientation === "portrait") {
-        const h = Math.floor(c.x / (s + o));
-        g = h + 1, l = c.x - h * (s + o), d = c.y;
+        const u = Math.floor(h.x / (n + c));
+        l = u + 1, g = h.x - u * (n + c), f = h.y;
       } else {
-        const h = s, C = Math.floor(c.y / (h + o));
-        g = C + 1, l = c.x, d = c.y - C * (h + o);
+        const u = n, C = Math.floor(h.y / (u + c));
+        l = C + 1, g = h.x, f = h.y - C * (u + c);
       }
       const p = {
         type: "image",
         originX: "center",
         originY: "center",
-        left: l,
-        top: d,
+        left: s(g),
+        top: s(f),
         angle: r.angle || 0,
         width: r.width,
         height: r.height,
-        scaleX: r.scaleX || 1,
-        scaleY: r.scaleY || 1,
-        is_grayscale: r.filters.some((h) => h.type === "Grayscale")
+        scaleX: s(r.scaleX || 1),
+        scaleY: s(r.scaleY || 1),
+        is_grayscale: r.filters.some((u) => u.type === "Grayscale")
       };
       e.push({
-        seq_no: f + 1,
+        seq_no: d + 1,
         img_id: r.imageId,
-        page_num: g,
+        page_num: l,
         img_setting: p
       });
     }), {
@@ -429,8 +433,8 @@ class F {
       page: {
         orientation: this.orientation,
         dpi: this.config.dpi,
-        width: this.orientation === "portrait" ? s : n,
-        height: this.orientation === "portrait" ? n : s,
+        width: s(this.orientation === "portrait" ? n : o),
+        height: s(this.orientation === "portrait" ? o : n),
         margin: this.config.pageMargin,
         pages: this.pageCount
       },
@@ -469,54 +473,56 @@ class F {
       t.data && (i = t.data);
     }
     const e = i;
-    this.canvas.clear(), this.orientation = e.page && e.page.orientation || e.orientation || "portrait", this.pageCount = e.page && e.page.pages || e.pageCount || 1, e.page && typeof e.page.margin < "u" ? this.config.pageMargin = e.page.margin : typeof e.margin < "u" && (this.config.pageMargin = e.margin);
-    const s = (d) => Math.round(d / 25.4 * this.config.dpi);
-    this.pageMarginPx = s(this.config.pageMargin), this.setupLayout();
-    const n = e.items || [], o = /* @__PURE__ */ new Set(), r = [], f = e.page && e.page.dpi || e.dpi || this.config.dpi, c = this.config.dpi / f, g = this.pageWidthPx;
+    this.canvas.clear();
+    const s = e.page && e.page.orientation || e.orientation || "portrait";
+    this.orientation = this._normalizeOrientation(s), this.pageCount = e.page && e.page.pages || e.pageCount || 1, e.page && typeof e.page.margin < "u" ? this.config.pageMargin = e.page.margin : typeof e.margin < "u" && (this.config.pageMargin = e.margin);
+    const n = (f) => Math.round(f / 25.4 * this.config.dpi);
+    this.pageMarginPx = n(this.config.pageMargin), this.setupLayout();
+    const o = e.items || [], c = /* @__PURE__ */ new Set(), r = [], d = e.page && e.page.dpi || e.dpi || this.config.dpi, h = this.config.dpi / d, l = this.pageWidthPx;
     this.pageHeightPx;
-    const l = this.gap;
-    for (const d of n) {
-      const p = d.img_id, h = d.img_setting || {};
-      if (this.config.uniqueImages && o.has(p)) {
-        const v = this.images.find((P) => P.img_id === p), m = v ? v.title || v.img_id : p;
-        r.push(m);
+    const g = this.gap;
+    for (const f of o) {
+      const p = f.img_id, u = f.img_setting || {};
+      if (this.config.uniqueImages && c.has(p)) {
+        const m = this.images.find((w) => w.img_id === p), P = m ? m.title || m.img_id : p;
+        r.push(P);
         continue;
       }
-      const C = this.images.find((v) => v.img_id === p);
+      const C = this.images.find((m) => m.img_id === p);
       if (C) {
-        o.add(p);
-        const v = (d.page_num || 1) - 1;
-        let m = 0, P = 0;
+        c.add(p);
+        const m = (f.page_num || 1) - 1;
+        let P = 0, w = 0;
         if (this.orientation === "portrait")
-          m = (h.left || 0) + v * (g + l), P = h.top || 0;
+          P = (u.left || 0) + m * (l + g), w = u.top || 0;
         else {
-          const y = g;
-          m = h.left || 0, P = (h.top || 0) + v * (y + l);
+          const S = l;
+          P = u.left || 0, w = (u.top || 0) + m * (S + g);
         }
-        let b = h.scaleX || 1, E = h.scaleY || 1;
-        if (Math.abs(c - 1) > 1e-4) {
-          const y = (h.left || 0) * c, w = (h.top || 0) * c;
+        let O = u.scaleX || 1, v = u.scaleY || 1;
+        if (Math.abs(h - 1) > 1e-4) {
+          const S = (u.left || 0) * h, I = (u.top || 0) * h;
           if (this.orientation === "portrait")
-            m = y + v * (g + l), P = w;
+            P = S + m * (l + g), w = I;
           else {
-            const I = g;
-            m = y, P = w + v * (I + l);
+            const E = l;
+            P = S, w = I + m * (E + g);
           }
-          b *= c, E *= c;
+          O *= h, v *= h;
         }
-        const u = C.url || C.base64, S = await M.fromURL(u);
-        S.set({
-          left: m,
-          top: P,
-          angle: h.angle || 0,
-          scaleX: b,
-          scaleY: E,
+        const b = C.url || C.base64, y = await M.fromURL(b);
+        y.set({
+          left: P,
+          top: w,
+          angle: u.angle || 0,
+          scaleX: O,
+          scaleY: v,
           originX: "center",
           originY: "center",
           imageId: p,
           cornerSize: 10,
           transparentCorners: !1
-        }), h.is_grayscale && (S.filters.push(new H.Grayscale()), S.applyFilters()), this.setupCustomControls(S), this.canvas.add(S), this.updateSidebarStatus(p, !0);
+        }), u.is_grayscale && (y.filters.push(new _.Grayscale()), y.applyFilters()), this.setupCustomControls(y), this.canvas.add(y), this.updateSidebarStatus(p, !0);
       } else
         console.warn(`Image ID ${p} not found in API. Skipping.`);
     }
@@ -528,20 +534,20 @@ class F {
   removePage() {
     if (this.pageCount > 1) {
       const t = this.pageWidthPx, i = this.pageHeightPx, e = this.pageCount - 1;
-      let s, n, o, r;
+      let s, n, o, c;
       if (this.orientation === "portrait")
-        s = e * (t + this.gap), n = 0, o = t, r = i;
+        s = e * (t + this.gap), n = 0, o = t, c = i;
       else {
-        const l = i, d = t;
-        s = 0, n = e * (d + this.gap), o = l, r = d;
+        const l = i, g = t;
+        s = 0, n = e * (g + this.gap), o = l, c = g;
       }
-      const f = this.canvas.getObjects().filter((l) => !l.isBackground), c = [], g = /* @__PURE__ */ new Set();
-      f.forEach((l) => {
-        const d = l.getCenterPoint();
-        d.x >= s && d.x <= s + o && d.y >= n && d.y <= n + r && c.push(l);
-      }), c.forEach((l) => {
-        l.imageId && g.add(l.imageId), this.canvas.remove(l);
-      }), this.pageCount--, this.setupLayout(), g.size > 0 && this.updateSidebarStatus(null, !1);
+      const r = this.canvas.getObjects().filter((l) => !l.isBackground), d = [], h = /* @__PURE__ */ new Set();
+      r.forEach((l) => {
+        const g = l.getCenterPoint();
+        g.x >= s && g.x <= s + o && g.y >= n && g.y <= n + c && d.push(l);
+      }), d.forEach((l) => {
+        l.imageId && h.add(l.imageId), this.canvas.remove(l);
+      }), this.pageCount--, this.setupLayout(), h.size > 0 && this.updateSidebarStatus(null, !1);
     }
   }
   enforceUniqueness() {

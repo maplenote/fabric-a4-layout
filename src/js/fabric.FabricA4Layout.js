@@ -219,9 +219,19 @@ export class FabricA4Layout {
         this.images = [];
         this.pageCount = 1;
 
-        this.orientation = this.config.orientation;
+        this.orientation = this._normalizeOrientation(this.config.orientation);
         this._layoutPending = false;
         this._layoutPromise = null;
+    }
+
+    _normalizeOrientation(value) {
+        const raw = value === null || typeof value === 'undefined' ? '' : String(value).trim();
+        const lowered = raw.toLowerCase();
+
+        if (lowered === 'p' || lowered === 'portrait') return 'portrait';
+        if (lowered === 'l' || lowered === 'landscape') return 'landscape';
+
+        return 'portrait';
     }
 
     async init() {
@@ -824,6 +834,8 @@ export class FabricA4Layout {
         const objects = this.canvas.getObjects().filter(o => !o.isBackground);
         const items = [];
 
+        const round3 = (value) => Math.round(value * 1000) / 1000;
+
         const pW = this.pageWidthPx;
         const pH = this.pageHeightPx;
         const gap = this.gap;
@@ -874,13 +886,13 @@ export class FabricA4Layout {
                 type: 'image',
                 originX: 'center',
                 originY: 'center',
-                left: relativeLeft,
-                top: relativeTop,
+                left: round3(relativeLeft),
+                top: round3(relativeTop),
                 angle: obj.angle || 0,
                 width: obj.width,
                 height: obj.height,
-                scaleX: obj.scaleX || 1,
-                scaleY: obj.scaleY || 1,
+                scaleX: round3(obj.scaleX || 1),
+                scaleY: round3(obj.scaleY || 1),
                 is_grayscale: obj.filters.some(f => f.type === 'Grayscale')
             };
 
@@ -897,8 +909,8 @@ export class FabricA4Layout {
             page: {
                 orientation: this.orientation,
                 dpi: this.config.dpi,
-                width: this.orientation === 'portrait' ? pW : pH,
-                height: this.orientation === 'portrait' ? pH : pW,
+                width: round3(this.orientation === 'portrait' ? pW : pH),
+                height: round3(this.orientation === 'portrait' ? pH : pW),
                 margin: this.config.pageMargin,
                 pages: this.pageCount
             },
@@ -956,7 +968,8 @@ export class FabricA4Layout {
 
         this.canvas.clear();
 
-        this.orientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
+        const rawOrientation = (data.page && data.page.orientation) || data.orientation || 'portrait';
+        this.orientation = this._normalizeOrientation(rawOrientation);
         this.pageCount = (data.page && data.page.pages) || data.pageCount || 1;
 
         // Update Margin from Load Data if present
