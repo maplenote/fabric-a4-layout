@@ -17,7 +17,7 @@
     "user_note": "急件"
   },
   "page": {
-    "orientation": "L",
+    "orientation": "portrait",
     "dpi": 48,
     "width": 397,
     "height": 561,
@@ -63,7 +63,7 @@
 
 | 欄位 | 類型 | 範例 | 說明 |
 | :--- | :--- | :--- | :--- |
-| `orientation` | String | `"L"` | `L`: 橫向 (Landscape)<br>`P`: 直向 (Portrait) |
+| `orientation` | String | `"portrait"` | `portrait`: 直向 (Portrait)<br>`landscape`: 橫向 (Landscape) |
 | `dpi` | Number | `48` | 版面 DPI 設定 (影響 px 計算)。 |
 | `width` | Number | `397` | 單頁 A4 的像素寬度 (計算公式: `210mm / 25.4 * dpi`)。 |
 | `height` | Number | `561` | 單頁 A4 的像素高度 (計算公式: `297mm / 25.4 * dpi`)。 |
@@ -193,7 +193,7 @@
         "user_note": "急件"
     },
     "page": {
-        "orientation": "L",
+        "orientation": "portrait",
         "dpi": 48,
         "width": 397,
         "height": 561,
@@ -231,3 +231,4 @@
     * **行為**：**不予顯示**該圖片，直接濾除，並在 UI 上顯示錯誤訊息提醒使用者「部分圖片已失效並自動移除」。
 3. **座標還原**：`img_setting.left/top` 為相對中心點座標，需加上 `(page_num - 1) * (page_size + gap)` 還原為 Canvas 絕對座標。
 4. **堆疊順序**：建議依 `items` 陣列順序依序加入畫布 (最後一個在最上層)。
+5. **方向容錯**：Load 時可容錯接受 `P/L/p/l`，會自動轉為 `portrait/landscape`，Save 時一律傳遞 `portrait/landscape`。

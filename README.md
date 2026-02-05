@@ -189,7 +189,7 @@ buttons: {
     "user_note": "急件" 
   },
   "page": {
-    "orientation": "P",
+    "orientation": "portrait",
     "dpi": 48,
     "width": 397,
     "height": 561,
@@ -225,6 +225,7 @@ buttons: {
 
 * **來源匹配**: 系統會根據 `img_id` 自動從現有的圖片列表中匹配 `url` 或 `base64`。
 * **重複檢查**: 若 `uniqueImages: true`，讀檔時會自動略過重複圖片。
+* **方向容錯**: Load 時可容錯接受 `P/L/p/l`，會自動轉為 `portrait/landscape`。
 
 ---
 
