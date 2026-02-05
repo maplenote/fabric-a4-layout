@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
@@ -107,7 +107,16 @@
                 max="50"
                 style="width: 80px"
               />
-              <span id="lbl-margin-px" style="display: block; font-size: 11px; color: #888; margin-top: 2px;">(換算: - px)</span>
+              <span
+                id="lbl-margin-px"
+                style="
+                  display: block;
+                  font-size: 11px;
+                  color: #888;
+                  margin-top: 2px;
+                "
+                >(換算: - px)</span
+              >
             </label>
             <label>
               預設方向:
@@ -129,6 +138,17 @@
                 "
                 placeholder='{"key": "value"}'
               ></textarea>
+            </label>
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                margin-top: 5px;
+              "
+            >
+              <input type="checkbox" id="inp-warn-unsaved-close" />
+              關閉視窗時提示未儲存修改
             </label>
             <label
               style="
@@ -232,9 +252,22 @@
           pageMargin: 5,
           dpi: 48,
           data: { page_pk: "123", user_note: "Demo Note" },
+          warnOnUnsavedClose: true,
         };
 
         await createLayout(currentConfig);
+
+        window.addEventListener("beforeunload", (event) => {
+          const isEnabled = !!window.layout?.config?.warnOnUnsavedClose;
+          if (!isEnabled) return undefined;
+          if (!window.layout?.isDirty || !window.layout.isDirty())
+            return undefined;
+
+          event.preventDefault();
+          // Note: modern browsers ignore custom text; returning a value triggers the prompt.
+          event.returnValue = "";
+          return "";
+        });
 
         // Settings Logic
         const dialog = document.getElementById("settings-dialog");
@@ -246,13 +279,16 @@
         const inpGrayscale = document.getElementById("inp-grayscale");
         const inpOrientation = document.getElementById("inp-orientation");
         const inpData = document.getElementById("inp-data");
+        const inpWarnUnsavedClose = document.getElementById(
+          "inp-warn-unsaved-close",
+        );
         const mmShort = 210;
 
         const updateMarginPxDisplay = () => {
-            const dpi = parseInt(inpDpi.value) || 0;
-            const mm = parseFloat(inpMargin.value) || 0;
-            const px = Math.round((mm / 25.4) * dpi);
-            lblMarginPx.innerText = `(換算: ${px} px)`;
+          const dpi = parseInt(inpDpi.value) || 0;
+          const mm = parseFloat(inpMargin.value) || 0;
+          const px = Math.round((mm / 25.4) * dpi);
+          lblMarginPx.innerText = `(換算: ${px} px)`;
         };
 
         inpDpi.oninput = () => {
@@ -282,8 +318,11 @@
           inpData.value = JSON.stringify(
             window.layout.config.data || {},
             null,
-            2
+            2,
           );
+          // Load close-warning flag
+          inpWarnUnsavedClose.checked =
+            !!window.layout.config.warnOnUnsavedClose;
 
           inpDpi.dispatchEvent(new Event("input")); // trigger sync
           updateMarginPxDisplay();
@@ -296,6 +335,7 @@
           const newUnique = inpUnique.checked;
           const newGrayscale = inpGrayscale.checked;
           const newOrientation = inpOrientation.value;
+          const newWarnUnsavedClose = !!inpWarnUnsavedClose.checked;
 
           const marginPx = Math.round((newMargin / 25.4) * newDpi);
 
@@ -318,14 +358,20 @@
             defaultGrayscale: newGrayscale,
             orientation: newOrientation,
             data: newData,
+            warnOnUnsavedClose: newWarnUnsavedClose,
           };
 
           // Re-init
           await createLayout(currentConfig);
+          if (window.layout && window.layout.markDirty) {
+            window.layout.markDirty("settings");
+          }
           alert(
             `A4已重置！\nDPI: ${newDpi}\n出血: ${newMargin}mm (約 ${marginPx}px)\n方向: ${newOrientation}\n不重複限制: ${
               newUnique ? "開啟" : "關閉"
-            }\n預設灰階: ${newGrayscale ? "開啟" : "關閉"}`
+            }\n預設灰階: ${newGrayscale ? "開啟" : "關閉"}\n關閉未儲存提示: ${
+              newWarnUnsavedClose ? "開啟" : "關閉"
+            }`,
           );
         };
 
@@ -347,7 +393,7 @@
           await window.layout.fetchImages();
           window.layout.showError(
             "圖片列表已更新，並已自動移除A4範圍外的圖片",
-            true
+            true,
           );
         };
 
@@ -359,11 +405,12 @@
               });
               window.layout.showError("佈局已成功儲存至伺服器！", true);
               console.log("Server Response:", res);
+              if (window.layout.markSaved) window.layout.markSaved();
               return;
             } catch (e) {
               console.warn(
                 "Backend save failed (Demo mode?), falling back to console.",
-                e
+                e,
               );
               window.layout.showError(`後端儲存失敗: ${e.message}`);
             }
@@ -374,10 +421,11 @@
           const data = window.layout.save({ demo_user: "user_123" });
           console.log("Saved Data (Console Mode):", data);
           lastSavedData = data;
+          if (window.layout.markSaved) window.layout.markSaved();
           if (!window.layout.config.saveEndpoint) {
             window.layout.showError(
               "佈局已儲存 (Demo 模式：無後端設定，僅顯示於 Console 並暫存於記憶體)",
-              true
+              true,
             );
           }
         };
@@ -393,14 +441,14 @@
 
             if (result.skipped && result.skipped.length > 0) {
               window.layout.showError(
-                `佈局讀取成功！但已略過重複圖片: ${result.skipped.join(", ")}`
+                `佈局讀取成功！但已略過重複圖片: ${result.skipped.join(", ")}`,
               );
             } else {
               window.layout.showError("佈局讀取成功！", true);
             }
           } else {
             window.layout.showError(
-              "尚未儲存任何佈局！請先試著擺放圖片並儲存。"
+              "尚未儲存任何佈局！請先試著擺放圖片並儲存。",
             );
           }
         };

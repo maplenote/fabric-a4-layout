@@ -111,6 +111,39 @@ const layout = new FabricA4Layout({
 await layout.init();
 ```
 
+### 未儲存提示 (Unsaved Warning)
+
+此範例專案在 [index.html](index.html) 內透過 `warnOnUnsavedClose` (Boolean) 控制關閉視窗時，若目前有未儲存修改則跳出確認提示。
+
+```javascript
+const layout = new FabricA4Layout({
+  // true: 有未儲存修改時，關閉/重新整理會跳出提示
+  // false: 不提示
+  warnOnUnsavedClose: true,
+});
+```
+
+* 注意：多數現代瀏覽器會忽略自訂提示文字，通常只能控制「要不要跳提示」。
+
+### 未儲存狀態 (Dirty State)
+
+你可以呼叫 `isDirty()` 取得目前是否有未儲存修改：
+
+```javascript
+if (layout.isDirty()) {
+  // 你的自訂流程，例如提示使用者、阻擋某些操作等
+}
+```
+
+在儲存（不論是 `save()` 或 `saveToBackend()`）成功後，請呼叫 `markSaved()` 讓 `dirty` 狀態歸零、避免下一次關閉視窗時被誤判為未儲存：
+
+```javascript
+const result = await layout.saveToBackend(...);
+if (result && result.success !== false) {
+  layout.markSaved();
+}
+```
+
 ---
 
 ## ⚙️ 初始化設定 (Configuration)
@@ -121,15 +154,16 @@ await layout.init();
 | :--- | :--- | :--- | :--- |
 | `canvasId` | String | `required` | `<canvas>` 元素的 ID。 |
 | `apiEndpoint` | String | `required` | 取得圖片列表的 API URL (GET)。 |
-| `saveEndpoint`| String | `null` | (選填) 儲存佈局的後端 API URL (POST)。 |
+| `saveEndpoint` | String | `null` | (選填) 儲存佈局的後端 API URL (POST)。 |
 | `dpi` | Number | `48` | 版面解析度，影響像素換算 (範圍 24-192)。 |
-| `pageMargin` | Number | `5` | 頁面出血/安全邊距 (mm)。<br>換算公式: `Math.round((mm / 25.4) * dpi)` |
+| `pageMargin` | Number | `5` | 頁面出血/安全邊距 (mm)。換算公式: `Math.round((mm / 25.4) * dpi)` |
 | `orientation` | String | `'portrait'` | 初始方向 `'portrait'` (直) 或 `'landscape'` (橫)。 |
 | `uniqueImages` | Boolean | `false` | 若為 `true`，同一張圖片僅能被加入畫布一次。 |
 | `defaultGrayscale` | Boolean | `false` | 若為 `true`，新加入的圖片自動套用灰階濾鏡。 |
-| `saveWithBase64`| Boolean | `false` | 存檔時是否保留圖片的 Base64 資料 (建議 false 以減少傳輸量)。 |
+| `saveWithBase64` | Boolean | `false` | 存檔時是否保留圖片的 Base64 資料 (建議 false 以減少傳輸量)。 |
 | `data` | Object | `{}` | (選填) 自訂初始化資料，將隨存檔一起送出。 |
-| `statusDisplayId`| String | `null` | 指定顯示狀態資訊 (頁數/尺寸) 的 DOM ID。 |
+| `warnOnUnsavedClose` | Boolean | `false` | 關閉視窗時，若有未儲存修改則跳出提示。 |
+| `statusDisplayId` | String | `null` | 指定顯示狀態資訊 (頁數/尺寸) 的 DOM ID。 |
 | `errorDisplayId` | String | `null` | 指定顯示錯誤或警告訊息的 DOM ID。 |
 | `buttons` | Object | `{}` | UI 按鈕綁定設定 (見下節)。 |
 
