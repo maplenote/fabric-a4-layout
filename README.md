@@ -4,13 +4,16 @@
 
 🔴 **線上展示 (Live Demo)**: [https://maplenote.github.io/fabric-a4-layout/](https://maplenote.github.io/fabric-a4-layout/)
 
+**新增功能 (v1.2):**
+
+* **刪除空白頁 (Remove Blank Pages)**: 一鍵移除所有未放置物件的空白頁面，並自動調整後續頁面順序。
+* **頁面清空 (Page Clear)**: 當僅剩一頁時，執行「減少頁數」操作將會清空該頁面所有內容。
+
 **新增功能 (v1.1):**
 
 * **自動縮放 (Auto Scale)**: 插入圖片時若超過 A4 尺寸，自動縮小至 95% 頁面大小 (預留出血邊)，未超過則維持原大。
 * **流式排版 (Flow Layout)**: 自動偵測上一張圖片位置往下排列；若空間不足，自動新增頁面並排至新頁頂端。
 * **預設灰階 (Default Grayscale)**: 可設定新圖片預設為黑白模式。
-* **刪除空白頁 (Remove Blank Pages)**: 一鍵移除所有未放置物件的空白頁面，並自動調整後續頁面順序。
-* **頁面清空 (Page Clear)**: 當僅剩一頁時，執行「減少頁數」操作將會清空該頁面所有內容。
 
 ## 🚀 快速開始 (Quick Start)
 
