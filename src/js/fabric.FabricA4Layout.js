@@ -1234,7 +1234,101 @@ export class FabricA4Layout {
             }
 
             this._setDirty(true, 'removePage');
+        } else {
+            // 只剩 1 頁時：清空該頁所有圖片物件，保留空白頁
+            const objects = this.canvas.getObjects().filter(obj => !obj.isBackground);
+            if (objects.length > 0) {
+                const removedImageIds = new Set();
+                objects.forEach(obj => {
+                    if (obj.imageId) removedImageIds.add(obj.imageId);
+                    this.canvas.remove(obj);
+                });
+                if (removedImageIds.size > 0) {
+                    this.updateSidebarStatus(null, false);
+                }
+                this._setDirty(true, 'removePage');
+            }
         }
+    }
+
+    removeBlankPages() {
+        if (this.pageCount <= 1) return;
+
+        const pW = this.pageWidthPx;
+        const pH = this.pageHeightPx;
+        const gap = this.gap;
+
+        const getPageBounds = (pageIndex) => {
+            if (this.orientation === 'portrait') {
+                return { left: pageIndex * (pW + gap), top: 0, width: pW, height: pH };
+            } else {
+                const visualW = pH;
+                const visualH = pW;
+                return { left: 0, top: pageIndex * (visualH + gap), width: visualW, height: visualH };
+            }
+        };
+
+        const allObjects = this.canvas.getObjects().filter(obj => !obj.isBackground);
+
+        const pageHasObjects = new Array(this.pageCount).fill(false);
+        allObjects.forEach(obj => {
+            const center = obj.getCenterPoint();
+            for (let i = 0; i < this.pageCount; i++) {
+                const b = getPageBounds(i);
+                if (center.x >= b.left && center.x <= b.left + b.width &&
+                    center.y >= b.top && center.y <= b.top + b.height) {
+                    pageHasObjects[i] = true;
+                    break;
+                }
+            }
+        });
+
+        const blankCount = pageHasObjects.filter(v => !v).length;
+        if (blankCount === 0) return;
+
+        // 全部空白：縮減至 1 頁
+        if (blankCount === this.pageCount) {
+            this.pageCount = 1;
+            this.setupLayout();
+            this._setDirty(true, 'removeBlankPages');
+            return;
+        }
+
+        // 建立舊頁碼 → 新頁碼對照表
+        let newIndex = 0;
+        const pageMapping = new Array(this.pageCount).fill(-1);
+        for (let i = 0; i < this.pageCount; i++) {
+            if (pageHasObjects[i]) {
+                pageMapping[i] = newIndex++;
+            }
+        }
+
+        // 將物件位移至新頁位置
+        allObjects.forEach(obj => {
+            const center = obj.getCenterPoint();
+            for (let i = 0; i < this.pageCount; i++) {
+                const b = getPageBounds(i);
+                if (center.x >= b.left && center.x <= b.left + b.width &&
+                    center.y >= b.top && center.y <= b.top + b.height) {
+                    const ni = pageMapping[i];
+                    if (ni !== i) {
+                        if (this.orientation === 'portrait') {
+                            obj.set('left', obj.left + (ni - i) * (pW + gap));
+                        } else {
+                            const visualH = pW;
+                            obj.set('top', obj.top + (ni - i) * (visualH + gap));
+                        }
+                        obj.setCoords();
+                    }
+                    break;
+                }
+            }
+        });
+
+        this.pageCount = newIndex;
+        this.setupLayout();
+        this.canvas.requestRenderAll();
+        this._setDirty(true, 'removeBlankPages');
     }
 
     enforceUniqueness() {

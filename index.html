@@ -10,8 +10,28 @@
 
     <!-- 2. 引入 Build 後的 CSS -->
     <link rel="stylesheet" href="./dist/css/fabric.FabricA4Layout.min.css" />
+    <style>
+      /* 儲存按鈕有未儲存異動時顯示紅色 */
+      .btn-save-dirty {
+        color: #d32f2f;
+      }
+
+      /* RWD：僅在 body.rwd-hide 下生效 */
+      .btn-label {
+        display: inline;
+      }
+
+      @media (max-width: 768px) {
+        body.rwd-hide .btn-label {
+          display: none;
+        }
+        body.rwd-hide #status-display {
+          display: none !important;
+        }
+      }
+    </style>
   </head>
-  <body>
+  <body class="rwd-hide">
     <div id="app">
       <div
         style="
@@ -24,14 +44,34 @@
           flex-wrap: wrap;
         "
       >
-        <strong>功能控制 (Demo):</strong>
-        <button id="btn-orientation">切換版面方向 (直/橫)</button>
-        <button id="btn-add-page">增加頁數</button>
-        <button id="btn-remove-page">減少頁數</button>
-        <button id="btn-refresh-images">🔄 更新圖片</button>
-        <button id="btn-settings">⚙️ A4設定</button>
-        <button id="btn-save">儲存佈局 (看 Console)</button>
-        <button id="btn-load">讀取佈局</button>
+        <strong class="btn-label">功能控制 (Demo):</strong>
+        <button id="btn-orientation">
+          🔁 <span class="btn-label">切換版面方向 (直/橫)</span>
+        </button>
+        <button id="btn-add-page">
+          ➕ <span class="btn-label">增加頁數</span>
+        </button>
+        <button id="btn-remove-page">
+          ➖ <span class="btn-label">減少頁數</span>
+        </button>
+        <button id="btn-remove-blank-pages">
+          🗑️ <span class="btn-label">刪除空白頁</span>
+        </button>
+        <button id="btn-refresh-images">
+          🔃 <span class="btn-label">刷新圖片列表</span>
+        </button>
+        <button id="btn-settings">
+          ⚙️ <span class="btn-label">A4設定</span>
+        </button>
+        <button id="btn-save">
+          💾 <span class="btn-label">儲存佈局 (看 Console)</span>
+        </button>
+        <button id="btn-load">
+          📂 <span class="btn-label">讀取佈局</span>
+        </button>
+        <button id="btn-close">
+          ✖ <span class="btn-label">關閉視窗</span>
+        </button>
 
         <span
           id="status-display"
@@ -263,6 +303,11 @@
           dpi: 48,
           data: { page_pk: "123", user_note: "Demo Note" },
           warnOnUnsavedClose: true,
+          onDirtyChange: (isDirty) => {
+            document
+              .getElementById("btn-save")
+              ?.classList.toggle("btn-save-dirty", isDirty);
+          },
         };
 
         await createLayout(currentConfig);
@@ -373,6 +418,10 @@
 
           // Re-init
           await createLayout(currentConfig);
+          // Reset dirty indicator after re-init
+          document
+            .getElementById("btn-save")
+            ?.classList.remove("btn-save-dirty");
           if (window.layout && window.layout.markDirty) {
             window.layout.markDirty("settings");
           }
@@ -396,6 +445,10 @@
 
         document.getElementById("btn-remove-page").onclick = () => {
           window.layout.removePage();
+        };
+
+        document.getElementById("btn-remove-blank-pages").onclick = () => {
+          window.layout.removeBlankPages();
         };
 
         document.getElementById("btn-refresh-images").onclick = async () => {
@@ -440,6 +493,18 @@
           }
         };
 
+        document.getElementById("btn-close").onclick = () => {
+          window.close();
+          // 若視窗未關閉（非 script 開啟的頁面），提示使用者
+          setTimeout(() => {
+            if (!window.closed) {
+              window.layout?.showError(
+                "因瀏覽器安全限制，無法自動關閉視窗，請手動關閉此分頁 (Ctrl+W / Cmd+W)。",
+              );
+            }
+          }, 300);
+        };
+
         document.getElementById("btn-load").onclick = async () => {
           if (lastSavedData) {
             const result = await window.layout.load(lastSavedData);
@@ -448,6 +513,8 @@
               window.layout.showError(`讀取失敗: ${result.message}`);
               return;
             }
+
+            if (window.layout.markSaved) window.layout.markSaved();
 
             if (result.skipped && result.skipped.length > 0) {
               window.layout.showError(
